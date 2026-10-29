@@ -1375,6 +1375,7 @@ def draw():
             pyxel.rect(83, 105, 70, 11, 3)
             pyxel.rectb(83, 105, 70, 11, 7)
             pyxel.text(96, 108, "SUBMIT", 7)
+       
         elif screen_mode == "leaderboard":
             draw_logo("DOPABALL", 43, 29, 1, 8)
             draw_logo("DOPABALL", 42, 28, 1, 10)
