@@ -607,13 +607,12 @@ def draw_heart(x, y, filled=True):
 
 
 def draw_hearts():
-    # 右端の専用スペースに縦並びで表示
-    pyxel.text(145, 76, "HP", 7)
+    pyxel.text(124, 5, "HP", 7)
 
     for i in range(MAX_HEARTS):
         draw_heart(
-            146,
-            84 + i * 10,
+            124 + i * 11,
+            15,
             filled=(i < hearts)
         )
 
