@@ -1,3 +1,36 @@
+import pyxel
+
+WIDTH = 160
+HEIGHT = 120
+
+leaderboard = []
+leaderboard_status = "LOADING"
+high_score = 0
+title_timer = 0
+
+
+def draw_logo(logo, x, y, scale, color):
+    for i, ch in enumerate(logo):
+        pyxel.text(x + i * 6 * scale, y, ch, color)
+
+
+def draw_bold_text(x, y, text, color, scale=1):
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            if dx == 0 and dy == 0:
+                continue
+            pyxel.text(x + dx * scale, y + dy * scale, text, 0)
+    pyxel.text(x, y, text, color)
+
+
+def draw_period_tabs(offset=39):
+    for i in range(3):
+        x = 20 + i * 34
+        pyxel.rect(x, 35, x + 16, 41, 0)
+        pyxel.rectb(x, 35, x + 16, 41, 12)
+    pyxel.rect(offset, 35, offset + 10, 41, 10)
+
+
 def draw_title():
     pyxel.cls(1)
 
@@ -58,6 +91,14 @@ def draw_title():
     pyxel.text(103, 100, "BEST:" + str(high_score), 7)
 
 
-# -----------------------------
-# Supabase
-# -----------------------------
+def update():
+    global title_timer
+    title_timer += 1
+
+
+def draw():
+    draw_title()
+
+
+pyxel.init(WIDTH, HEIGHT, title="SQUASH FEVER")
+pyxel.run(update, draw)
