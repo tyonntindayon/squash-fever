@@ -180,10 +180,14 @@ def update():
 
     # ゲームオーバー
     if game_over:
-        if pyxel.btnp(pyxel.KEY_SPACE):
-            reset()
-        return
-
+    if (
+        pyxel.btnp(pyxel.KEY_SPACE)
+        or pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
+        or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A)
+    ):
+        reset()
+    return
+    
     # パドル操作
 if pyxel.btn(pyxel.KEY_LEFT):
     paddle_x -= 3
