@@ -28,8 +28,10 @@ SUPABASE_KEY = "sb_publishable_sae6J_mLG2NpvPFf2MI-kQ_ozswuMhR"
 TABLE_URL = SUPABASE_URL + "/rest/v1/squash_scores"
 
 SAVE_FILE = "dopaball_save.json"
+GAME_TITLE = "DOPABALL"
+TITLE_BYLINE = "created by Tugumu Kudo"
 
-pyxel.init(WIDTH, HEIGHT, title="DOPABALL")
+pyxel.init(WIDTH, HEIGHT, title=GAME_TITLE + " - " + TITLE_BYLINE)
 
 COLORS = [1, 2, 5, 6, 9, 12, 13]
 
@@ -407,6 +409,7 @@ def draw_title():
     pyxel.line(12, 23, 148, 23, 10)
     pyxel.line(24, 25, 136, 25, 12)
     pyxel.text(52, 29, "SQUASH FEVER", 7)
+    pyxel.text(26, 35, TITLE_BYLINE, 6)
 
     pyxel.rect(8, 35, 144, 61, 0)
     pyxel.rectb(8, 35, 144, 61, 12)
