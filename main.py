@@ -33,7 +33,14 @@ ball_x = 70.0
 ball_y = 60.0
 ball_dx = 1.0
 ball_dy = 1.0
+
+# 現在のゲームスピード。ライフを失っても維持する。
 ball_speed = 1.5
+MAX_BALL_SPEED = 7.5
+
+# ライフを失った後、ボールをパドルの前に待機させる
+ball_attached = False
+
 extra_balls = []
 
 score = 0
@@ -112,7 +119,9 @@ def make_particles(x, y, amount=12, color=None):
     for _ in range(amount):
         angle = pyxel.rndf(0, math.pi * 2)
         speed = pyxel.rndf(0.5, 2.5)
-        particle_color = color if color is not None else pyxel.rndi(8, 15)
+        particle_color = (
+            color if color is not None else pyxel.rndi(8, 15)
+        )
 
         particles.append([
             x, y,
@@ -162,14 +171,18 @@ def draw_period_tabs(y):
     daily_color = 10 if selected_period == "DAILY" else 5
     pyxel.rect(22, y, 52, 9, daily_color)
     pyxel.rectb(22, y, 52, 9, 7)
-    pyxel.text(32, y + 2, "DAILY",
-               0 if selected_period == "DAILY" else 7)
+    pyxel.text(
+        32, y + 2, "DAILY",
+        0 if selected_period == "DAILY" else 7
+    )
 
     monthly_color = 10 if selected_period == "MONTHLY" else 5
     pyxel.rect(86, y, 52, 9, monthly_color)
     pyxel.rectb(86, y, 52, 9, 7)
-    pyxel.text(94, y + 2, "MONTHLY",
-               0 if selected_period == "MONTHLY" else 7)
+    pyxel.text(
+        94, y + 2, "MONTHLY",
+        0 if selected_period == "MONTHLY" else 7
+    )
 
 
 def period_tab_clicked(mx, my, y):
@@ -263,11 +276,15 @@ def draw_title():
             name = str(item.get("player_name", "PLAYER"))[:10]
             points = str(item.get("score", 0))
 
-            pyxel.text(14, y, str(i + 1) + ".",
-                       10 if i == 0 else 7)
+            pyxel.text(
+                14, y, str(i + 1) + ".",
+                10 if i == 0 else 7
+            )
             pyxel.text(29, y, name, 7)
-            pyxel.text(112, y, points,
-                       10 if i == 0 else 11)
+            pyxel.text(
+                112, y, points,
+                10 if i == 0 else 11
+            )
 
     if title_timer < 120:
         pyxel.text(54, 100, "GET READY...", 7)
@@ -498,11 +515,13 @@ def update_power_items():
         item["y"] += item["speed"]
         collected = False
 
-        dx = ball_x - item["x"]
-        dy = ball_y - item["y"]
+        # 待機中のボールではアイテムを取得しない
+        if not ball_attached:
+            dx = ball_x - item["x"]
+            dy = ball_y - item["y"]
 
-        if dx * dx + dy * dy <= 9 * 9:
-            collected = True
+            if dx * dx + dy * dy <= 9 * 9:
+                collected = True
 
         if not collected:
             for ball in extra_balls:
@@ -566,11 +585,7 @@ def draw_hearts():
     pyxel.text(111, 2, "HP", 7)
 
     for i in range(MAX_HEARTS):
-        draw_heart(
-            127 + i * 10,
-            2,
-            filled=(i < hearts)
-        )
+        draw_heart(127 + i * 10, 2, filled=(i < hearts))
 
 
 # -----------------------------
@@ -580,6 +595,7 @@ def draw_hearts():
 def reset():
     global paddle_x, paddle_y, paddle_w
     global ball_x, ball_y, ball_dx, ball_dy, ball_speed
+    global ball_attached
     global score, combo, game_over, hearts
     global flash_timer, shake_timer, fever_timer
     global particles, music_level, screen_mode, submitted_this_round
@@ -595,7 +611,10 @@ def reset():
     ball_y = 55.0
     ball_dx = 1.0
     ball_dy = 1.0
+
+    # 新しいゲームの開始時だけ速度を初期化
     ball_speed = 1.5
+    ball_attached = False
 
     extra_balls.clear()
 
@@ -665,14 +684,41 @@ def handle_name_tap(mx, my):
 
 
 # -----------------------------
-# Game over helper
+# Ball serve
+# -----------------------------
+
+def attach_ball_to_paddle():
+    """ボールをパドルの中央上に置く。"""
+    global ball_x, ball_y, ball_dx, ball_dy, ball_attached
+
+    ball_x = paddle_x + paddle_w / 2
+    ball_y = paddle_y - 8
+    ball_dx = 0.0
+    ball_dy = -1.0
+    ball_attached = True
+
+
+def launch_attached_ball():
+    """待機中のボールを打ち出す。"""
+    global ball_dx, ball_dy, ball_attached
+
+    angle = pyxel.rndf(-0.55, 0.55)
+    ball_dx = math.sin(angle)
+    ball_dy = -abs(math.cos(angle))
+    ball_attached = False
+
+    pyxel.play(3, 6)
+
+
+# -----------------------------
+# Game over / life lost
 # -----------------------------
 
 def lose_heart_and_continue():
     global hearts, ball_x, ball_y, ball_dx, ball_dy
     global extra_balls, combo, game_over, screen_mode, player_name
     global submitted_this_round, flash_timer, shake_timer
-    global power_message, power_message_timer
+    global power_message, power_message_timer, ball_attached
 
     hearts -= 1
     extra_balls.clear()
@@ -684,6 +730,7 @@ def lose_heart_and_continue():
         hearts = 0
         game_over = True
         combo = 0
+        ball_attached = False
 
         pyxel.stop(3)
         pyxel.play(3, 8)
@@ -694,15 +741,12 @@ def lose_heart_and_continue():
         submitted_this_round = False
 
     else:
-        ball_x = WIDTH / 2
-        ball_y = 55.0
-        ball_dx = pyxel.rndf(-0.7, 0.7)
-
-        if abs(ball_dx) < 0.2:
-            ball_dx = 0.3
-
-        ball_dy = -1.0
+        # 速度 ball_speed は変更しない！
+        # コンボはリセットするが、到達済みの速度は維持する。
         combo = 0
+
+        # パドルの中央の少し上に新しいボールを配置
+        attach_ball_to_paddle()
 
         power_message = "LIFE LOST!"
         power_message_timer = 70
@@ -717,6 +761,7 @@ def lose_heart_and_continue():
 def update():
     global paddle_x, paddle_w
     global ball_x, ball_y, ball_dx, ball_dy, ball_speed
+    global ball_attached
     global score, high_score, combo, game_over
     global flash_timer, shake_timer, fever_timer
     global player_name, screen_mode, submitted_this_round
@@ -780,7 +825,9 @@ def update():
                     screen_mode = "leaderboard"
 
                     try:
-                        asyncio.ensure_future(submit_and_refresh(name, score))
+                        asyncio.ensure_future(
+                            submit_and_refresh(name, score)
+                        )
                     except Exception:
                         submitted_this_round = False
 
@@ -819,8 +866,30 @@ def update():
 
     paddle_x = max(0, min(WIDTH - paddle_w, paddle_x))
 
+    # ----------------------------------
+    # ライフを失った後のボール待機処理
+    # ----------------------------------
+    if ball_attached:
+        # ボールをパドルの中央上に追従させる
+        ball_x = paddle_x + paddle_w / 2
+        ball_y = paddle_y - 8
+
+        # スペースキーまたはクリックで打ち出す
+        if (
+            pyxel.btnp(pyxel.KEY_SPACE)
+            or pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
+        ):
+            launch_attached_ball()
+
+        # 打ち出したフレームでは移動させない
+        return
+
+    # ----------------------------------
     # Ball acceleration
-    ball_speed = min(7.5, 1.5 + combo * 0.18)
+    # ----------------------------------
+    # コンボで速度を上げる。コンボが切れても速度は下げない。
+    combo_speed = min(MAX_BALL_SPEED, 1.5 + combo * 0.18)
+    ball_speed = max(ball_speed, combo_speed)
 
     # Main ball movement
     ball_x += ball_dx * ball_speed
@@ -866,6 +935,10 @@ def update():
 
         score += points
         high_score = max(high_score, score)
+
+        # コンボ上昇に応じて速度を上げ、最高速度を維持
+        combo_speed = min(MAX_BALL_SPEED, 1.5 + combo * 0.18)
+        ball_speed = max(ball_speed, combo_speed)
 
         flash_timer = 3
         shake_timer = 4
@@ -924,6 +997,9 @@ def update():
 
             score += points
             high_score = max(high_score, score)
+
+            combo_speed = min(MAX_BALL_SPEED, 1.5 + combo * 0.18)
+            ball_speed = max(ball_speed, combo_speed)
 
             make_particles(ball["x"], ball["y"], 10)
             pyxel.play(3, 6)
@@ -1048,6 +1124,10 @@ def draw():
 
     # HUDを最後に描画し、ゲーム画面と視覚的に分離
     draw_game_hud()
+
+    # 待機中のボールに操作案内を表示
+    if ball_attached and not game_over:
+        pyxel.text(43, 83, "SPACE / TAP", 7)
 
     # Active power-up indicators
     if giant_timer > 0:
