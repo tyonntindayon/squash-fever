@@ -20,6 +20,7 @@ COLORS = [1, 2, 5, 6, 9, 12, 13]
 paddle_x = 65.0
 paddle_y = 105
 BASE_PADDLE_W = 30
+GIANT_PADDLE_W = 45
 paddle_w = BASE_PADDLE_W
 
 ball_x = 80.0
@@ -27,8 +28,6 @@ ball_y = 60.0
 ball_dx = 1.0
 ball_dy = 1.0
 ball_speed = 1.5
-
-# Additional balls created by the MULTI BALL item.
 extra_balls = []
 
 score = 0
@@ -42,7 +41,6 @@ fever_timer = 0
 music_level = -1
 particles = []
 
-# Power-up items
 power_items = []
 spawn_timer = 180
 power_spawning_started = False
@@ -73,40 +71,21 @@ keyboard_rows = [
     "456789_-<"
 ]
 
+
 # -----------------------------
 # Sound
 # -----------------------------
 
-pyxel.sounds[0].set(
-    "c3e3g3e3c3e3g3e3", "p", "6", "n", 12
-)
-pyxel.sounds[1].set(
-    "c2c2g2g2a2a2g2g2", "t", "4", "n", 12
-)
-pyxel.sounds[2].set(
-    "c3e3g3c4g3e3g3c4", "p", "7", "n", 9
-)
-pyxel.sounds[3].set(
-    "c2g2c3g2f2g2a2g2", "t", "6", "n", 9
-)
-pyxel.sounds[4].set(
-    "c4g3e3g3c4g3e3g3", "p", "7", "n", 6
-)
-pyxel.sounds[5].set(
-    "c2c3g2c3a2c3g2c3", "t", "7", "n", 6
-)
-pyxel.sounds[6].set(
-    "c3g3c4", "p", "7", "s", 8
-)
-pyxel.sounds[7].set(
-    "c3e3g3c4", "p", "7", "s", 6
-)
-pyxel.sounds[8].set(
-    "g3e3c3", "t", "7", "f", 10
-)
-pyxel.sounds[9].set(
-    "c3e3g3c4", "p", "7", "s", 8
-)
+pyxel.sounds[0].set("c3e3g3e3c3e3g3e3", "p", "6", "n", 12)
+pyxel.sounds[1].set("c2c2g2g2a2a2g2g2", "t", "4", "n", 12)
+pyxel.sounds[2].set("c3e3g3c4g3e3g3c4", "p", "7", "n", 9)
+pyxel.sounds[3].set("c2g2c3g2f2g2a2g2", "t", "6", "n", 9)
+pyxel.sounds[4].set("c4g3e3g3c4g3e3g3", "p", "7", "n", 6)
+pyxel.sounds[5].set("c2c3g2c3a2c3g2c3", "t", "7", "n", 6)
+pyxel.sounds[6].set("c3g3c4", "p", "7", "s", 8)
+pyxel.sounds[7].set("c3e3g3c4", "p", "7", "s", 6)
+pyxel.sounds[8].set("g3e3c3", "t", "7", "f", 10)
+pyxel.sounds[9].set("c3e3g3c4", "p", "7", "s", 8)
 
 pyxel.musics[0].set([0], [1], [], [])
 pyxel.musics[1].set([2], [3], [], [])
@@ -486,9 +465,15 @@ def activate_power_item(item_type):
     global extra_balls
 
     if item_type == 0:
+        # GIANT PADDLE: width 30 -> 45 for 10 seconds
         giant_timer = 60 * 10
-        paddle_w = 45
-        paddle_x = max(0, min(WIDTH - paddle_w, paddle_x))
+        paddle_w = GIANT_PADDLE_W
+
+        # Keep the entire paddle inside the screen.
+        paddle_x = max(
+            0,
+            min(WIDTH - paddle_w, paddle_x)
+        )
 
         power_message = "GIANT PADDLE!"
         make_particles(ball_x, ball_y, 24, 12)
@@ -500,7 +485,6 @@ def activate_power_item(item_type):
         make_particles(ball_x, ball_y, 24, 10)
 
     else:
-        # Maintain three balls maximum.
         current_ball_count = 1 + len(extra_balls)
         balls_to_add = max(0, 3 - current_ball_count)
 
@@ -528,8 +512,7 @@ def activate_power_item(item_type):
 def update_power_items():
     global spawn_timer, power_spawning_started
 
-    # The opening is item-free.
-    # Items start appearing only when the ball is fast enough.
+    # Items do not appear at the beginning.
     if pyxel.frame_count >= 180 and ball_speed >= 2.4:
 
         if not power_spawning_started:
@@ -538,9 +521,6 @@ def update_power_items():
 
         spawn_timer -= 1
 
-        # The faster the ball, the more frequent the drops.
-        # At speed 2.4: intervals are about 300-420 frames.
-        # At high speed: intervals shrink to about 90-120 frames.
         speed_factor = min(
             1.0,
             max(0.0, (ball_speed - 2.4) / (7.5 - 2.4))
@@ -561,10 +541,9 @@ def update_power_items():
 
     for item in power_items[:]:
         item["y"] += item["speed"]
-
         collected = False
 
-        # Main ball collision
+        # Main ball collision.
         dx = ball_x - item["x"]
         dy = ball_y - item["y"]
 
@@ -597,19 +576,16 @@ def draw_power_items():
         pulse = pyxel.frame_count // 5 % 2
 
         if item["type"] == 0:
-            # Giant paddle
             pyxel.circ(x, y, 5, 12)
             pyxel.circ(x, y, 3, 1)
             pyxel.text(x - 2, y - 3, "W", 7)
 
         elif item["type"] == 1:
-            # Triple score
             pyxel.circ(x, y, 5, 10)
             pyxel.circ(x, y, 3, 9)
             pyxel.text(x - 4, y - 3, "x3", 0)
 
         else:
-            # Multi ball
             pyxel.circ(x, y, 5, 11)
             pyxel.circ(x, y, 3, 1)
             pyxel.text(x - 3, y - 3, "3", 7)
@@ -734,7 +710,7 @@ def update():
         initial_fetch_started = True
         launch_refresh()
 
-    # Title
+    # Title screen
     if screen_mode == "title":
         title_timer += 1
 
@@ -824,18 +800,31 @@ def update():
 
         return
 
+    # -------------------------
     # Power-up timers
+    # -------------------------
+
     if giant_timer > 0:
         giant_timer -= 1
 
         if giant_timer == 0:
+            # Return to the normal paddle width.
             paddle_w = BASE_PADDLE_W
+
             paddle_x = max(
-                0, min(WIDTH - paddle_w, paddle_x)
+                0,
+                min(WIDTH - paddle_w, paddle_x)
             )
 
     if triple_timer > 0:
         triple_timer -= 1
+
+    # Keep the paddle width synchronized with the active effect.
+    # This also prevents the paddle from getting stuck at the wrong size.
+    if giant_timer > 0:
+        paddle_w = GIANT_PADDLE_W
+    else:
+        paddle_w = BASE_PADDLE_W
 
     # Paddle movement
     if pyxel.btn(pyxel.KEY_LEFT):
@@ -852,7 +841,7 @@ def update():
         min(WIDTH - paddle_w, paddle_x)
     )
 
-    # Faster acceleration as combo increases.
+    # Ball acceleration
     ball_speed = min(7.5, 1.5 + combo * 0.18)
 
     # Main ball movement
@@ -885,8 +874,7 @@ def update():
         )
         hit_offset = max(-1.0, min(1.0, hit_offset))
 
-        max_angle = math.radians(55)
-        angle = hit_offset * max_angle
+        angle = hit_offset * math.radians(55)
 
         ball_dx = math.sin(angle)
         ball_dy = -math.cos(angle)
@@ -895,7 +883,6 @@ def update():
 
         multiplier = min(5, 1 + combo // 5)
         fever = combo >= 10
-
         points = multiplier * (2 if fever else 1)
 
         if triple_timer > 0:
@@ -972,14 +959,13 @@ def update():
             make_particles(ball["x"], ball["y"], 10)
             pyxel.play(3, 6)
 
-        # Remove a lost extra ball without ending the game.
         if ball["y"] > HEIGHT:
             extra_balls.remove(ball)
 
-    # Power-up item movement and collection
+    # Power-up items
     update_power_items()
 
-    # Game over only after every ball has been lost.
+    # Game over only after all balls are lost
     if ball_y > HEIGHT:
         if extra_balls:
             replacement = extra_balls.pop(0)
@@ -1035,6 +1021,7 @@ def draw():
         ) % WIDTH
 
         color = COLORS[(i + phase) % len(COLORS)]
+
         pyxel.line(
             x + sx, sy,
             x + sx, HEIGHT + sy,
@@ -1061,19 +1048,23 @@ def draw():
             color = COLORS[(i + phase) % len(COLORS)]
             pyxel.rect(x + sx, sy, 8, 3, color)
 
-    # Paddle
+    # Paddle: draw using the current paddle width.
     paddle_color = 12 if giant_timer > 0 else 11
 
     pyxel.rect(
         int(paddle_x + sx),
         int(paddle_y + sy),
-        paddle_w, 5, paddle_color
+        int(paddle_w),
+        5,
+        paddle_color
     )
 
     pyxel.rectb(
         int(paddle_x + sx - 1),
         int(paddle_y + sy - 1),
-        paddle_w + 2, 7, 7
+        int(paddle_w) + 2,
+        7,
+        7
     )
 
     # Main ball
@@ -1128,8 +1119,8 @@ def draw():
             10
         )
 
-    # Ball count
     ball_count = 1 + len(extra_balls)
+
     if ball_count > 1:
         pyxel.text(110, 5, "BALLS:" + str(ball_count), 11)
 
@@ -1236,6 +1227,7 @@ def draw():
                 submit_status[:22],
                 6 if submit_status == "SAVED" else 8
             )
+
             pyxel.text(7, 112, "TAP / SPACE: RETRY", 10)
 
 
