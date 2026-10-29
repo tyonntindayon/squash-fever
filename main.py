@@ -1,4 +1,3 @@
-
 import pyxel
 import math
 import asyncio
@@ -1335,7 +1334,7 @@ def draw():
         pyxel.rect(3, 28, 154, 90, 0)
         pyxel.rectb(3, 28, 154, 90, 10)
 
-                if screen_mode == "name":
+        if screen_mode == "name":
             pyxel.text(45, 31, "GAME OVER", 8)
             pyxel.text(7, 40, "SCORE:" + str(score), 7)
             pyxel.text(7, 47, "BEST:" + str(high_score), 10)
@@ -1375,7 +1374,7 @@ def draw():
             pyxel.rect(83, 105, 70, 11, 3)
             pyxel.rectb(83, 105, 70, 11, 7)
             pyxel.text(96, 108, "SUBMIT", 7)
-       
+
         elif screen_mode == "leaderboard":
             draw_logo("DOPABALL", 43, 29, 1, 8)
             draw_logo("DOPABALL", 42, 28, 1, 10)
