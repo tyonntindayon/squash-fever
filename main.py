@@ -12,12 +12,12 @@ def draw_title():
         pyxel.circ(x, y, 2, 12)
 
     logo = "DOPABALL"
-    scale = 2
+    scale = 1
     logo_width = len(logo) * 5 * scale - scale
     start_x = (WIDTH - logo_width) // 2
     logo_color = 10 if pyxel.frame_count // 12 % 2 == 0 else 11
 
-    draw_logo(logo, start_x + 2, 6, scale, 8)
+    draw_logo(logo, start_x + 1, 6, scale, 8)
     draw_logo(logo, start_x, 4, scale, logo_color)
 
     pyxel.line(12, 23, 148, 23, 10)
@@ -52,10 +52,10 @@ def draw_title():
     elif pyxel.frame_count // 20 % 2 == 0:
         pyxel.text(45, 100, "TAP TO START", 10)
 
-    pyxel.text(62, 104, "created by", 6)
-    draw_bold_text(60, 110, "Tugumu", 10, 1)
-    draw_bold_text(90, 110, "Kudo", 10, 1)
-    pyxel.text(102, 104, "BEST:" + str(high_score), 7)
+    pyxel.text(62, 100, "created by", 6)
+    draw_bold_text(60, 105, "Tugumu", 10, 1)
+    draw_bold_text(90, 105, "Kudo", 10, 1)
+    pyxel.text(103, 100, "BEST:" + str(high_score), 7)
 
 
 # -----------------------------
