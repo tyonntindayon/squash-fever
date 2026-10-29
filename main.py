@@ -100,6 +100,59 @@ keyboard_rows = [
     "456789_-<"
 ]
 
+NAME_INPUT_X = 8
+NAME_INPUT_Y = 64
+NAME_INPUT_W = 144
+NAME_INPUT_H = 8
+
+KEYBOARD_START_X = 8
+KEYBOARD_START_Y = 76
+KEYBOARD_KEY_W = 12
+KEYBOARD_KEY_H = 7
+KEYBOARD_KEY_GAP = 1
+KEYBOARD_ROW_GAP = 1
+
+DELETE_BUTTON = (8, 103, 56, 10)
+SUBMIT_BUTTON = (92, 103, 60, 10)
+
+
+def get_name_input_rect():
+    return (NAME_INPUT_X, NAME_INPUT_Y, NAME_INPUT_W, NAME_INPUT_H)
+
+
+def get_keyboard_key_rect(row_index, key_index):
+    x = KEYBOARD_START_X + key_index * (KEYBOARD_KEY_W + KEYBOARD_KEY_GAP)
+    y = KEYBOARD_START_Y + row_index * (KEYBOARD_KEY_H + KEYBOARD_ROW_GAP)
+    return (x, y, KEYBOARD_KEY_W, KEYBOARD_KEY_H)
+
+
+def get_delete_button_rect():
+    return DELETE_BUTTON
+
+
+def get_submit_button_rect():
+    return SUBMIT_BUTTON
+
+
+def submit_current_name():
+    global screen_mode, submitted_this_round, submit_status
+
+    name = player_name.strip()[:12]
+    if not name or submitted_this_round or submit_task_running:
+        return False
+
+    submitted_this_round = True
+    screen_mode = "leaderboard"
+    submit_status = "SENDING"
+    try:
+        asyncio.ensure_future(submit_and_refresh(name, score))
+        return True
+    except Exception:
+        submitted_this_round = False
+        submit_status = "LOCAL SAVE"
+        return False
+
+
 # -----------------------------
 # Sound
 # -----------------------------
@@ -889,41 +942,27 @@ def handle_name_tap(mx, my):
     global player_name, screen_mode, submitted_this_round
     global submit_status
 
-    # キーボードの描画位置と一致させる
     for row, chars in enumerate(keyboard_rows):
-        y = 69 + row * 8
-
-        if y <= my < y + 8:
+        row_y = KEYBOARD_START_Y + row * (KEYBOARD_KEY_H + KEYBOARD_ROW_GAP)
+        if row_y <= my < row_y + KEYBOARD_KEY_H:
             for index, char in enumerate(chars):
-                x = 7 + index * 15
-
-                if x <= mx < x + 13:
+                x, y, w, h = get_keyboard_key_rect(row, index)
+                if x <= mx < x + w and y <= my < y + h:
                     if char == "<":
                         player_name = player_name[:-1]
                     elif len(player_name) < 12:
                         player_name += char
                     return
 
-    # DELETEボタン
-    if 7 <= mx < 77 and 105 <= my < 116:
+    delete_x, delete_y, delete_w, delete_h = get_delete_button_rect()
+    if delete_x <= mx < delete_x + delete_w and delete_y <= my < delete_y + delete_h:
         player_name = player_name[:-1]
         return
 
-    # SUBMITボタン
-    if 83 <= mx < 153 and 105 <= my < 116:
-        name = player_name.strip()[:12]
-
-        if name and not submitted_this_round:
-            submitted_this_round = True
-
-            try:
-                asyncio.ensure_future(
-                    submit_and_refresh(name, score)
-                )
-                screen_mode = "leaderboard"
-            except Exception:
-                submitted_this_round = False
-                submit_status = "LOCAL SAVE"
+    submit_x, submit_y, submit_w, submit_h = get_submit_button_rect()
+    if submit_x <= mx < submit_x + submit_w and submit_y <= my < submit_y + submit_h:
+        submit_current_name()
+        return
 
 
 # -----------------------------
@@ -1003,19 +1042,7 @@ def update():
                 player_name = player_name[:-1]
 
             if pyxel.btnp(pyxel.KEY_RETURN):
-                name = player_name.strip()[:12]
-
-                if name and not submitted_this_round:
-                    submitted_this_round = True
-                    screen_mode = "leaderboard"
-
-                    try:
-                        asyncio.ensure_future(
-                            submit_and_refresh(name, score)
-                        )
-                    except Exception:
-                        submitted_this_round = False
-                        submit_status = "LOCAL SAVE"
+                submit_current_name()
 
             if pyxel.btnp(pyxel.KEY_L):
                 screen_mode = "leaderboard"
@@ -1354,44 +1381,38 @@ def draw():
 
         if screen_mode == "name":
             pyxel.text(45, 31, "GAME OVER", 8)
-            pyxel.text(7, 40, "SCORE:" + str(score), 7)
-            pyxel.text(7, 47, "BEST:" + str(high_score), 10)
-            pyxel.text(7, 53, "MAX COMBO:" + str(max_combo), 11)
+            pyxel.text(7, 38, "SCORE:" + str(score), 7)
+            pyxel.text(7, 45, "BEST:" + str(high_score), 10)
+            pyxel.text(7, 52, "MAX COMBO:" + str(max_combo), 11)
             pyxel.text(
                 7, 59,
                 "MAX SPEED:" + str(round(max_speed, 1)),
                 12
             )
 
-            # 名前入力欄
-            pyxel.text(
-                7, 63,
-                "NAME:" + player_name[:12],
-                7
-            )
+            pyxel.text(7, 66, "NAME:", 7)
+            name_x, name_y, name_w, name_h = get_name_input_rect()
+            pyxel.rect(name_x, name_y, name_w, name_h, 1)
+            pyxel.rectb(name_x, name_y, name_w, name_h, 7)
+            pyxel.text(name_x + 3, name_y + 1, player_name[:12], 7)
 
-            # キーボード
             for row, chars in enumerate(keyboard_rows):
-                y = 69 + row * 8
-
                 for index, char in enumerate(chars):
-                    x = 7 + index * 15
-
-                    pyxel.rect(x, y, 13, 8, 1)
-                    pyxel.rectb(x, y, 13, 8, 10)
-
+                    x, y, w, h = get_keyboard_key_rect(row, index)
+                    pyxel.rect(x, y, w, h, 1)
+                    pyxel.rectb(x, y, w, h, 10)
                     label = "BK" if char == "<" else char
                     pyxel.text(x + 2, y + 1, label, 7)
 
-            # DELETEボタン
-            pyxel.rect(7, 105, 70, 11, 8)
-            pyxel.rectb(7, 105, 70, 11, 7)
-            pyxel.text(19, 108, "DELETE", 7)
+            delete_x, delete_y, delete_w, delete_h = get_delete_button_rect()
+            pyxel.rect(delete_x, delete_y, delete_w, delete_h, 8)
+            pyxel.rectb(delete_x, delete_y, delete_w, delete_h, 7)
+            pyxel.text(delete_x + 12, delete_y + 2, "DELETE", 7)
 
-            # SUBMITボタン
-            pyxel.rect(83, 105, 70, 11, 3)
-            pyxel.rectb(83, 105, 70, 11, 7)
-            pyxel.text(96, 108, "SUBMIT", 7)
+            submit_x, submit_y, submit_w, submit_h = get_submit_button_rect()
+            pyxel.rect(submit_x, submit_y, submit_w, submit_h, 3)
+            pyxel.rectb(submit_x, submit_y, submit_w, submit_h, 7)
+            pyxel.text(submit_x + 13, submit_y + 2, "SUBMIT", 7)
 
         elif screen_mode == "leaderboard":
             draw_logo("DOPABALL", 43, 29, 1, 8)
