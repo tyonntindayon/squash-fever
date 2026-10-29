@@ -117,6 +117,40 @@ def make_particles(x, y, amount=12):
 
 
 # -----------------------------
+# DOPABALL 大型ドットロゴ
+# -----------------------------
+
+LOGO_FONT = {
+    "D": ["1110", "1001", "1001", "1001", "1110"],
+    "O": ["0110", "1001", "1001", "1001", "0110"],
+    "P": ["1110", "1001", "1110", "1000", "1000"],
+    "A": ["0110", "1001", "1111", "1001", "1001"],
+    "B": ["1110", "1001", "1110", "1001", "1110"],
+    "L": ["1000", "1000", "1000", "1000", "1111"],
+}
+
+
+def draw_logo(text, x, y, scale, color):
+    cursor_x = x
+
+    for char in text:
+        pattern = LOGO_FONT[char]
+
+        for row, line in enumerate(pattern):
+            for col, pixel in enumerate(line):
+                if pixel == "1":
+                    pyxel.rect(
+                        cursor_x + col * scale,
+                        y + row * scale,
+                        scale,
+                        scale,
+                        color
+                    )
+
+        cursor_x += 5 * scale
+
+
+# -----------------------------
 # タイトル画面
 # -----------------------------
 
@@ -134,20 +168,34 @@ def draw_title():
         y = 18 + (i % 3) * 30
         pyxel.circ(x, y, 2, 12)
 
-    # DOPABALL ネオンロゴ
+    # 大型DOPABALLロゴ
+    logo = "DOPABALL"
+    scale = 3
+    logo_width = len(logo) * 5 * scale - scale
+    start_x = (WIDTH - logo_width) // 2
+    start_y = 4
+
     logo_color = (
         10 if pyxel.frame_count // 12 % 2 == 0
         else 11
     )
 
-    pyxel.text(65 - 16, 10, "DOPABALL", 8)
-    pyxel.text(64 - 16, 9, "DOPABALL", logo_color)
+    # ネオンの影
+    draw_logo(
+        logo, start_x + 2, start_y + 2,
+        scale, 8
+    )
 
-    # ロゴの装飾
-    pyxel.line(24, 19, 136, 19, 10)
-    pyxel.line(34, 21, 126, 21, 12)
+    # ロゴ本体
+    draw_logo(
+        logo, start_x, start_y,
+        scale, logo_color
+    )
 
-    pyxel.text(52, 26, "SQUASH FEVER", 7)
+    pyxel.line(12, 23, 148, 23, 10)
+    pyxel.line(24, 25, 136, 25, 12)
+
+    pyxel.text(52, 29, "SQUASH FEVER", 7)
 
     # ランキングパネル
     pyxel.rect(8, 35, 144, 55, 0)
@@ -175,7 +223,6 @@ def draw_title():
 
             points = str(item.get("score", 0))
 
-            # 1位は目立つ色にする
             rank_color = 10 if i == 0 else 7
             score_color = 10 if i == 0 else 11
 
@@ -719,29 +766,29 @@ def draw():
             )
 
         elif screen_mode == "leaderboard":
-            # 英語ロゴ
-            pyxel.text(65 - 16, 30, "DOPABALL", 8)
-            pyxel.text(64 - 16, 29, "DOPABALL", 10)
+            # ランキング画面の小型ドットロゴ
+            draw_logo("DOPABALL", 43, 29, 1, 8)
+            draw_logo("DOPABALL", 42, 28, 1, 10)
 
-            pyxel.text(42, 40, "TOP 10 SCORES", 10)
+            pyxel.text(42, 38, "TOP 10 SCORES", 10)
 
             if leaderboard_status == "LOADING":
-                pyxel.text(43, 49, "LOADING...", 7)
+                pyxel.text(43, 47, "LOADING...", 7)
 
             elif leaderboard_status == "ERROR":
-                pyxel.text(12, 49, "RANKING OFFLINE", 8)
+                pyxel.text(12, 47, "RANKING OFFLINE", 8)
                 pyxel.text(
-                    7, 58,
+                    7, 56,
                     leaderboard_error[:25],
                     7
                 )
 
             elif not leaderboard:
-                pyxel.text(29, 49, "NO SCORES YET", 7)
+                pyxel.text(29, 47, "NO SCORES YET", 7)
 
             else:
                 for i, item in enumerate(leaderboard[:7]):
-                    y = 49 + i * 7
+                    y = 47 + i * 7
 
                     name = str(
                         item.get("player_name", "PLAYER")
