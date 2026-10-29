@@ -2,7 +2,6 @@ import pyxel
 import math
 import asyncio
 import json
-import os
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
@@ -237,6 +236,9 @@ def draw_logo(text, x, y, scale, color):
     cursor_x = x
 
     for char in text:
+        if char not in LOGO_FONT:
+            continue
+
         pattern = LOGO_FONT[char]
 
         for row, line in enumerate(pattern):
@@ -409,6 +411,10 @@ async def get_json(url):
 async def send_score(name, points):
     from pyodide.http import pyfetch
 
+    name = str(name).strip()
+    if not name:
+        raise ValueError("empty player name")
+
     response = await pyfetch(
         TABLE_URL,
         method="POST",
@@ -455,6 +461,9 @@ async def refresh_leaderboard():
         )
 
         rows = await get_json(url)
+        if not isinstance(rows, list):
+            rows = []
+
         best_by_player = {}
 
         for item in rows:
