@@ -445,7 +445,7 @@ def draw_title():
     elif pyxel.frame_count // 20 % 2 == 0:
         pyxel.text(45, 100, "TAP TO START", 10)
 
-    pyxel.text(25, 109, "created by TugumuKudo", 6)
+    pyxel.text(25, 109, "    created by Tugumu Kudo", 6)
     pyxel.text(38, 115, "BEST:" + str(high_score), 7)
 
 
