@@ -10,7 +10,7 @@ SUPABASE_URL = "https://hxjzgilnqxnnxlpqyasu.supabase.co"
 SUPABASE_KEY = "sb_publishable_sae6J_mLG2NpvPFf2MI-kQ_ozswuMhR"
 TABLE_URL = SUPABASE_URL + "/rest/v1/squash_scores"
 
-pyxel.init(WIDTH, HEIGHT, title="SQUASH FEVER")
+pyxel.init(WIDTH, HEIGHT, title="ドパボール")
 
 COLORS = [1, 2, 5, 6, 9, 12, 13]
 
@@ -41,7 +41,9 @@ leaderboard_status = "LOADING"
 leaderboard_error = ""
 submit_status = ""
 
-screen_mode = "game"
+# 最初はタイトル画面
+screen_mode = "title"
+
 fetch_task_running = False
 submit_task_running = False
 submitted_this_round = False
@@ -54,7 +56,10 @@ keyboard_rows = [
     "456789_-<"
 ]
 
+# -----------------------------
 # サウンド
+# -----------------------------
+
 pyxel.sounds[0].set(
     "c3e3g3e3c3e3g3e3", "p", "6", "n", 12
 )
@@ -108,6 +113,144 @@ def make_particles(x, y, amount=12):
             math.sin(angle) * speed,
             15, color
         ])
+
+
+# -----------------------------
+# 日本語タイトルのドット絵
+# -----------------------------
+
+# 7×9ピクセルでカタカナを描画
+KANA = {
+    "ド": [
+        "0000010",
+        "0000100",
+        "0010000",
+        "0011110",
+        "0010010",
+        "0010010",
+        "0010010",
+        "0010010",
+        "0010010",
+    ],
+    "パ": [
+        "0000010",
+        "0000100",
+        "0000000",
+        "0000010",
+        "0000100",
+        "0001000",
+        "0010000",
+        "0100010",
+        "1000010",
+    ],
+    "ボ": [
+        "0000010",
+        "0000100",
+        "0000000",
+        "0011110",
+        "0001000",
+        "0011100",
+        "0001000",
+        "0010100",
+        "0100010",
+    ],
+    "ー": [
+        "0000000",
+        "0000000",
+        "0000000",
+        "1111111",
+        "0000000",
+        "0000000",
+        "0000000",
+        "0000000",
+        "0000000",
+    ],
+    "ル": [
+        "0001000",
+        "0001000",
+        "0001000",
+        "0001000",
+        "0001000",
+        "0001010",
+        "0001010",
+        "0010010",
+        "0100010",
+    ],
+}
+
+
+def draw_kana(text, x, y, scale, color):
+    cursor_x = x
+
+    for char in text:
+        pattern = KANA[char]
+
+        for row, line in enumerate(pattern):
+            for col, pixel in enumerate(line):
+                if pixel == "1":
+                    pyxel.rect(
+                        cursor_x + col * scale,
+                        y + row * scale,
+                        scale,
+                        scale,
+                        color
+                    )
+
+        # 濁点・半濁点を追加
+        if char in ("ド", "パ", "ボ"):
+            pyxel.rect(
+                cursor_x + 4 * scale,
+                y,
+                scale,
+                scale,
+                color
+            )
+            pyxel.rect(
+                cursor_x + 5 * scale,
+                y + scale,
+                scale,
+                scale,
+                color
+            )
+
+        cursor_x += 9 * scale
+
+
+def draw_title():
+    pyxel.cls(1)
+
+    # ネオンの背景ライン
+    for i in range(9):
+        x = (i * 21 + pyxel.frame_count) % WIDTH
+        color = 5 if i % 2 == 0 else 8
+        pyxel.line(x, 0, x - 25, HEIGHT, color)
+
+    # 背景の光る円
+    for i in range(5):
+        x = (i * 37 + pyxel.frame_count // 2) % WIDTH
+        y = 18 + (i % 3) * 30
+        pyxel.circ(x, y, 2, 12)
+
+    # タイトルの影
+    draw_kana("ドパボール", 30, 36, 2, 8)
+
+    # ネオン本体
+    title_color = (
+        10 if pyxel.frame_count // 12 % 2 == 0
+        else 11
+    )
+    draw_kana("ドパボール", 28, 34, 2, title_color)
+
+    # タイトル下の装飾
+    pyxel.line(24, 57, 136, 57, 10)
+    pyxel.line(35, 59, 125, 59, 12)
+
+    # TAP TO START 点滅
+    if pyxel.frame_count // 20 % 2 == 0:
+        pyxel.text(45, 75, "TAP TO START", 7)
+
+    pyxel.text(45, 91, "SQUASH FEVER", 10)
+    pyxel.text(39, 108, "MOVE: LEFT / RIGHT", 6)
 
 
 # -----------------------------
@@ -262,7 +405,6 @@ def handle_name_tap(mx, my):
     global screen_mode
     global submitted_this_round
 
-    # 4行のオンスクリーンキーボード
     for row in range(4):
         y = 57 + row * 12
 
@@ -312,9 +454,21 @@ def update():
     global player_name, screen_mode
     global submitted_this_round, initial_fetch_started
 
+    # ランキングを一度読み込む
     if not initial_fetch_started:
         initial_fetch_started = True
         launch_refresh()
+
+    # タイトル画面
+    if screen_mode == "title":
+        if (
+            pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
+            or pyxel.btnp(pyxel.KEY_SPACE)
+            or pyxel.btnp(pyxel.KEY_RETURN)
+        ):
+            reset()
+
+        return
 
     if flash_timer > 0:
         flash_timer -= 1
@@ -347,7 +501,6 @@ def update():
                     pyxel.mouse_y
                 )
 
-            # 外付けキーボードにも対応
             if pyxel.btnp(pyxel.KEY_BACKSPACE):
                 player_name = player_name[:-1]
 
@@ -372,10 +525,10 @@ def update():
         # ランキング画面
         elif screen_mode == "leaderboard":
 
-            if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-                reset()
-
-            elif pyxel.btnp(pyxel.KEY_SPACE):
+            if (
+                pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
+                or pyxel.btnp(pyxel.KEY_SPACE)
+            ):
                 reset()
 
             elif pyxel.btnp(pyxel.KEY_N):
@@ -474,6 +627,11 @@ def update():
 # -----------------------------
 
 def draw():
+    # タイトル画面
+    if screen_mode == "title":
+        draw_title()
+        return
+
     interval = (
         4 if combo >= 10
         else 8 if combo >= 5
