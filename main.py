@@ -1,3 +1,4 @@
+
 import pyxel
 import math
 import asyncio
@@ -41,8 +42,8 @@ leaderboard_status = "LOADING"
 leaderboard_error = ""
 submit_status = ""
 
-# 最初はタイトル画面
 screen_mode = "title"
+title_timer = 0
 
 fetch_task_running = False
 submit_task_running = False
@@ -119,7 +120,6 @@ def make_particles(x, y, amount=12):
 # 日本語タイトルのドット絵
 # -----------------------------
 
-# 7×9ピクセルでカタカナを描画
 KANA = {
     "ド": [
         "0000010",
@@ -196,57 +196,40 @@ def draw_kana(text, x, y, scale, color):
                         color
                     )
 
-        # 濁点・半濁点を追加
-        if char in ("ド", "パ", "ボ"):
-            pyxel.rect(
-                cursor_x + 4 * scale,
-                y,
-                scale,
-                scale,
-                color
-            )
-            pyxel.rect(
-                cursor_x + 5 * scale,
-                y + scale,
-                scale,
-                scale,
-                color
-            )
-
         cursor_x += 9 * scale
 
 
 def draw_title():
     pyxel.cls(1)
 
-    # ネオンの背景ライン
+    # ネオン背景ライン
     for i in range(9):
         x = (i * 21 + pyxel.frame_count) % WIDTH
         color = 5 if i % 2 == 0 else 8
         pyxel.line(x, 0, x - 25, HEIGHT, color)
 
-    # 背景の光る円
+    # 背景の光
     for i in range(5):
         x = (i * 37 + pyxel.frame_count // 2) % WIDTH
         y = 18 + (i % 3) * 30
         pyxel.circ(x, y, 2, 12)
 
-    # タイトルの影
+    # タイトルの影と本体
     draw_kana("ドパボール", 30, 36, 2, 8)
 
-    # ネオン本体
     title_color = (
         10 if pyxel.frame_count // 12 % 2 == 0
         else 11
     )
     draw_kana("ドパボール", 28, 34, 2, title_color)
 
-    # タイトル下の装飾
     pyxel.line(24, 57, 136, 57, 10)
     pyxel.line(35, 59, 125, 59, 12)
 
-    # TAP TO START 点滅
-    if pyxel.frame_count // 20 % 2 == 0:
+    # 約2秒後にスタート案内
+    if title_timer < 120:
+        pyxel.text(57, 75, "GET READY...", 7)
+    elif pyxel.frame_count // 20 % 2 == 0:
         pyxel.text(45, 75, "TAP TO START", 7)
 
     pyxel.text(45, 91, "SQUASH FEVER", 10)
@@ -453,6 +436,7 @@ def update():
     global flash_timer, shake_timer, fever_timer
     global player_name, screen_mode
     global submitted_this_round, initial_fetch_started
+    global title_timer
 
     # ランキングを一度読み込む
     if not initial_fetch_started:
@@ -461,7 +445,9 @@ def update():
 
     # タイトル画面
     if screen_mode == "title":
-        if (
+        title_timer += 1
+
+        if title_timer >= 120 and (
             pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
             or pyxel.btnp(pyxel.KEY_SPACE)
             or pyxel.btnp(pyxel.KEY_RETURN)
@@ -491,8 +477,6 @@ def update():
 
     # ゲームオーバー画面
     if game_over:
-
-        # 名前入力画面
         if screen_mode == "name":
 
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
@@ -522,9 +506,7 @@ def update():
                 screen_mode = "leaderboard"
                 launch_refresh()
 
-        # ランキング画面
         elif screen_mode == "leaderboard":
-
             if (
                 pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
                 or pyxel.btnp(pyxel.KEY_SPACE)
@@ -639,7 +621,6 @@ def draw():
     )
 
     phase = pyxel.frame_count // interval
-
     bg = COLORS[phase % len(COLORS)]
 
     if flash_timer > 0:
@@ -779,25 +760,29 @@ def draw():
             )
 
         elif screen_mode == "leaderboard":
-            pyxel.text(42, 31, "TOP 10 SCORES", 10)
+            # ランキング画面のロゴ
+            draw_kana("ドパボール", 55, 30, 1, 8)
+            draw_kana("ドパボール", 54, 29, 1, 10)
+
+            pyxel.text(42, 43, "TOP 10 SCORES", 10)
 
             if leaderboard_status == "LOADING":
-                pyxel.text(43, 44, "LOADING...", 7)
+                pyxel.text(43, 52, "LOADING...", 7)
 
             elif leaderboard_status == "ERROR":
-                pyxel.text(12, 44, "RANKING OFFLINE", 8)
+                pyxel.text(12, 52, "RANKING OFFLINE", 8)
                 pyxel.text(
-                    7, 55,
+                    7, 61,
                     leaderboard_error[:25],
                     7
                 )
 
             elif not leaderboard:
-                pyxel.text(29, 44, "NO SCORES YET", 7)
+                pyxel.text(29, 52, "NO SCORES YET", 7)
 
             else:
-                for i, item in enumerate(leaderboard[:10]):
-                    y = 42 + i * 6
+                for i, item in enumerate(leaderboard[:7]):
+                    y = 52 + i * 7
 
                     name = str(
                         item.get("player_name", "PLAYER")
@@ -810,21 +795,14 @@ def draw():
                         str(i + 1) + ".",
                         10
                     )
-
                     pyxel.text(23, y, name, 7)
-
-                    pyxel.text(
-                        112, y,
-                        points,
-                        11
-                    )
+                    pyxel.text(112, y, points, 11)
 
             pyxel.text(
                 7, 104,
                 submit_status[:22],
                 6 if submit_status == "SAVED" else 8
             )
-
             pyxel.text(7, 112, "TAP / SPACE: RETRY", 10)
 
 
