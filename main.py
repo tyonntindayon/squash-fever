@@ -3,6 +3,8 @@ import pyxel
 import math
 import asyncio
 import json
+from datetime import datetime, timedelta, timezone
+from urllib.parse import quote
 
 WIDTH = 160
 HEIGHT = 120
@@ -10,6 +12,8 @@ HEIGHT = 120
 SUPABASE_URL = "https://hxjzgilnqxnnxlpqyasu.supabase.co"
 SUPABASE_KEY = "sb_publishable_sae6J_mLG2NpvPFf2MI-kQ_ozswuMhR"
 TABLE_URL = SUPABASE_URL + "/rest/v1/squash_scores"
+
+JST = timezone(timedelta(hours=9))
 
 pyxel.init(WIDTH, HEIGHT, title="DOPABALL")
 
@@ -44,6 +48,9 @@ submit_status = ""
 
 screen_mode = "title"
 title_timer = 0
+
+# DAILY / MONTHLY
+selected_period = "DAILY"
 
 fetch_task_running = False
 submit_task_running = False
@@ -117,7 +124,7 @@ def make_particles(x, y, amount=12):
 
 
 # -----------------------------
-# DOPABALL 大型ドットロゴ
+# DOPABALL ドットロゴ
 # -----------------------------
 
 LOGO_FONT = {
@@ -142,12 +149,84 @@ def draw_logo(text, x, y, scale, color):
                     pyxel.rect(
                         cursor_x + col * scale,
                         y + row * scale,
-                        scale,
-                        scale,
-                        color
+                        scale, scale, color
                     )
 
         cursor_x += 5 * scale
+
+
+# -----------------------------
+# DAILY / MONTHLY タブ
+# -----------------------------
+
+def draw_period_tabs(y):
+    # DAILY
+    daily_color = 10 if selected_period == "DAILY" else 5
+    pyxel.rect(22, y, 52, 9, daily_color)
+    pyxel.rectb(22, y, 52, 9, 7)
+    pyxel.text(32, y + 2, "DAILY", 0 if selected_period == "DAILY" else 7)
+
+    # MONTHLY
+    monthly_color = 10 if selected_period == "MONTHLY" else 5
+    pyxel.rect(86, y, 52, 9, monthly_color)
+    pyxel.rectb(86, y, 52, 9, 7)
+    pyxel.text(94, y + 2, "MONTHLY", 0 if selected_period == "MONTHLY" else 7)
+
+
+def period_tab_clicked(mx, my, y):
+    global selected_period
+
+    if y <= my < y + 10:
+        if 22 <= mx < 74:
+            if selected_period != "DAILY":
+                selected_period = "DAILY"
+                launch_refresh()
+            return True
+
+        if 86 <= mx < 138:
+            if selected_period != "MONTHLY":
+                selected_period = "MONTHLY"
+                launch_refresh()
+            return True
+
+    return False
+
+
+# -----------------------------
+# ランキング期間
+# -----------------------------
+
+def get_period_bounds(period):
+    now = datetime.now(JST)
+
+    if period == "MONTHLY":
+        start = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+
+        if start.month == 12:
+            end = start.replace(
+                year=start.year + 1, month=1
+            )
+        else:
+            end = start.replace(month=start.month + 1)
+
+    else:
+        start = now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        end = start + timedelta(days=1)
+
+    return start, end
+
+
+def period_title():
+    now = datetime.now(JST)
+
+    if selected_period == "MONTHLY":
+        return now.strftime("%Y/%m") + " MONTHLY"
+
+    return now.strftime("%Y/%m/%d") + " DAILY"
 
 
 # -----------------------------
@@ -157,7 +236,6 @@ def draw_logo(text, x, y, scale, color):
 def draw_title():
     pyxel.cls(1)
 
-    # 動くネオン背景
     for i in range(9):
         x = (i * 21 + pyxel.frame_count) % WIDTH
         color = 5 if i % 2 == 0 else 8
@@ -168,7 +246,6 @@ def draw_title():
         y = 18 + (i % 3) * 30
         pyxel.circ(x, y, 2, 12)
 
-    # 大型DOPABALLロゴ
     logo = "DOPABALL"
     scale = 3
     logo_width = len(logo) * 5 * scale - scale
@@ -180,17 +257,8 @@ def draw_title():
         else 11
     )
 
-    # ネオンの影
-    draw_logo(
-        logo, start_x + 2, start_y + 2,
-        scale, 8
-    )
-
-    # ロゴ本体
-    draw_logo(
-        logo, start_x, start_y,
-        scale, logo_color
-    )
+    draw_logo(logo, start_x + 2, start_y + 2, scale, 8)
+    draw_logo(logo, start_x, start_y, scale, logo_color)
 
     pyxel.line(12, 23, 148, 23, 10)
     pyxel.line(24, 25, 136, 25, 12)
@@ -198,53 +266,51 @@ def draw_title():
     pyxel.text(52, 29, "SQUASH FEVER", 7)
 
     # ランキングパネル
-    pyxel.rect(8, 35, 144, 55, 0)
-    pyxel.rectb(8, 35, 144, 55, 12)
+    pyxel.rect(8, 35, 144, 61, 0)
+    pyxel.rectb(8, 35, 144, 61, 12)
 
-    pyxel.text(43, 39, "ONLINE TOP 5", 10)
+    draw_period_tabs(39)
+
+    pyxel.text(
+        44, 50,
+        "TOP 5 SCORES",
+        10
+    )
 
     if leaderboard_status == "LOADING":
-        pyxel.text(49, 52, "LOADING...", 7)
+        pyxel.text(49, 64, "LOADING...", 7)
 
     elif leaderboard_status == "ERROR":
-        pyxel.text(22, 51, "RANKING OFFLINE", 8)
-        pyxel.text(13, 61, "CHECK CONNECTION", 6)
+        pyxel.text(22, 64, "RANKING OFFLINE", 8)
+        pyxel.text(13, 75, "CHECK CONNECTION", 6)
 
     elif not leaderboard:
-        pyxel.text(28, 54, "NO SCORES YET", 7)
+        pyxel.text(28, 66, "NO SCORES YET", 7)
 
     else:
         for i, item in enumerate(leaderboard[:5]):
-            y = 49 + i * 7
+            y = 59 + i * 7
 
-            name = str(
-                item.get("player_name", "PLAYER")
-            )[:10]
-
+            name = str(item.get("player_name", "PLAYER"))[:10]
             points = str(item.get("score", 0))
 
             rank_color = 10 if i == 0 else 7
             score_color = 10 if i == 0 else 11
 
-            pyxel.text(
-                14, y,
-                str(i + 1) + ".",
-                rank_color
-            )
+            pyxel.text(14, y, str(i + 1) + ".", rank_color)
             pyxel.text(29, y, name, 7)
             pyxel.text(112, y, points, score_color)
 
-    # スタート案内
     if title_timer < 120:
-        pyxel.text(54, 96, "GET READY...", 7)
+        pyxel.text(54, 100, "GET READY...", 7)
     elif pyxel.frame_count // 20 % 2 == 0:
-        pyxel.text(45, 96, "TAP TO START", 10)
+        pyxel.text(45, 100, "TAP TO START", 10)
 
-    pyxel.text(25, 108, "MOVE: LEFT / RIGHT", 6)
+    pyxel.text(25, 110, "MOVE: LEFT / RIGHT", 6)
 
 
 # -----------------------------
-# オンラインランキング通信
+# Supabase 通信
 # -----------------------------
 
 async def get_json(url):
@@ -298,16 +364,55 @@ async def refresh_leaderboard():
 
     fetch_task_running = True
     leaderboard_status = "LOADING"
+    requested_period = selected_period
 
     try:
+        start, end = get_period_bounds(requested_period)
+
+        start_utc = start.astimezone(timezone.utc).isoformat()
+        end_utc = end.astimezone(timezone.utc).isoformat()
+
         url = (
             TABLE_URL
             + "?select=player_name,score,created_at"
+            + "&created_at=gte." + quote(start_utc, safe=":")
+            + "&created_at=lt." + quote(end_utc, safe=":")
             + "&order=score.desc,created_at.asc"
-            + "&limit=10"
+            + "&limit=1000"
         )
 
-        leaderboard = await get_json(url)
+        rows = await get_json(url)
+
+        # プレイヤーごとに期間内の最高スコア1件を残す
+        best_by_player = {}
+
+        for item in rows:
+            name = str(item.get("player_name", "PLAYER")).strip()
+            points = int(item.get("score", 0))
+
+            if not name:
+                name = "PLAYER"
+
+            key = name.upper()
+
+            if (
+                key not in best_by_player
+                or points > int(best_by_player[key].get("score", 0))
+            ):
+                best_by_player[key] = {
+                    "player_name": name,
+                    "score": points,
+                    "created_at": item.get("created_at", "")
+                }
+
+        leaderboard = sorted(
+            best_by_player.values(),
+            key=lambda item: (
+                -int(item.get("score", 0)),
+                item.get("created_at", "")
+            )
+        )
+
         leaderboard_status = "OK"
         leaderboard_error = ""
 
@@ -317,6 +422,10 @@ async def refresh_leaderboard():
 
     finally:
         fetch_task_running = False
+
+    # 読み込み中にタブが切り替わった場合、選択中の期間を再取得
+    if selected_period != requested_period:
+        await refresh_leaderboard()
 
 
 async def submit_and_refresh(name, points):
@@ -454,9 +563,17 @@ def update():
     if screen_mode == "title":
         title_timer += 1
 
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            if period_tab_clicked(
+                pyxel.mouse_x, pyxel.mouse_y, 39
+            ):
+                return
+
+            if title_timer >= 120:
+                reset()
+
         if title_timer >= 120 and (
-            pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
-            or pyxel.btnp(pyxel.KEY_SPACE)
+            pyxel.btnp(pyxel.KEY_SPACE)
             or pyxel.btnp(pyxel.KEY_RETURN)
         ):
             reset()
@@ -514,9 +631,16 @@ def update():
                 launch_refresh()
 
         elif screen_mode == "leaderboard":
-            if (
-                pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
-                or pyxel.btnp(pyxel.KEY_SPACE)
+            if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+                if period_tab_clicked(
+                    pyxel.mouse_x, pyxel.mouse_y, 38
+                ):
+                    return
+
+                reset()
+
+            elif (
+                pyxel.btnp(pyxel.KEY_SPACE)
             ):
                 reset()
 
@@ -549,18 +673,17 @@ def update():
 
     if ball_x <= 3:
         ball_x = 3
-        ball_dx = 1
+        ball_dx = abs(ball_dx)
 
     elif ball_x >= WIDTH - 4:
         ball_x = WIDTH - 4
-        ball_dx = -1
+        ball_dx = -abs(ball_dx)
 
     if ball_y <= 3:
         ball_y = 3
-        ball_dy = 1
+        ball_dy = abs(ball_dy)
 
-
-    # パドルとの衝突
+    # パドルとの衝突：当たった位置で反射角度を変更
     if (
         ball_dy > 0
         and paddle_x - 3 <= ball_x <= paddle_x + paddle_w + 3
@@ -568,16 +691,13 @@ def update():
     ):
         ball_y = paddle_y - 4
 
-        # 板の中央からの当たり位置を -1.0 ～ 1.0 で計算
         paddle_center = paddle_x + paddle_w / 2
         hit_offset = (ball_x - paddle_center) / (paddle_w / 2)
         hit_offset = max(-1.0, min(1.0, hit_offset))
 
-        # 当たった位置に応じて反射角度を変更
         max_angle = math.radians(55)
         angle = hit_offset * max_angle
 
-        # 真上を基準に、左右へ角度をつける
         ball_dx = math.sin(angle)
         ball_dy = -math.cos(angle)
 
@@ -629,7 +749,6 @@ def update():
 # -----------------------------
 
 def draw():
-    # タイトル画面
     if screen_mode == "title":
         draw_title()
         return
@@ -779,29 +898,30 @@ def draw():
             )
 
         elif screen_mode == "leaderboard":
-            # ランキング画面の小型ドットロゴ
             draw_logo("DOPABALL", 43, 29, 1, 8)
             draw_logo("DOPABALL", 42, 28, 1, 10)
 
-            pyxel.text(42, 38, "TOP 10 SCORES", 10)
+            draw_period_tabs(38)
+
+            pyxel.text(
+                42, 49,
+                "TOP 7 SCORES",
+                10
+            )
 
             if leaderboard_status == "LOADING":
-                pyxel.text(43, 47, "LOADING...", 7)
+                pyxel.text(43, 59, "LOADING...", 7)
 
             elif leaderboard_status == "ERROR":
-                pyxel.text(12, 47, "RANKING OFFLINE", 8)
-                pyxel.text(
-                    7, 56,
-                    leaderboard_error[:25],
-                    7
-                )
+                pyxel.text(12, 59, "RANKING OFFLINE", 8)
+                pyxel.text(7, 68, leaderboard_error[:25], 7)
 
             elif not leaderboard:
-                pyxel.text(29, 47, "NO SCORES YET", 7)
+                pyxel.text(29, 59, "NO SCORES YET", 7)
 
             else:
                 for i, item in enumerate(leaderboard[:7]):
-                    y = 47 + i * 7
+                    y = 57 + i * 6
 
                     name = str(
                         item.get("player_name", "PLAYER")
