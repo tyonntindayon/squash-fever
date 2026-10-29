@@ -351,7 +351,7 @@ def update():
             if pyxel.btnp(pyxel.KEY_BACKSPACE):
                 player_name = player_name[:-1]
 
-            if pyxel.btnp(pyxel.KEY_ENTER):
+            if pyxel.btnp(pyxel.KEY_RETURN):
                 name = player_name.strip()[:12]
 
                 if name and not submitted_this_round:
