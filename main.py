@@ -871,13 +871,13 @@ def reset():
 
 def handle_name_tap(mx, my):
     global player_name, screen_mode, submitted_this_round
+    global submit_status
 
-    for row in range(4):
-        y = 57 + row * 12
+    # キーボードの描画位置と同じ座標で判定
+    for row, chars in enumerate(keyboard_rows):
+        y = 71 + row * 8
 
-        if y <= my < y + 11:
-            chars = keyboard_rows[row]
-
+        if y <= my < y + 8:
             for index, char in enumerate(chars):
                 x = 7 + index * 15
 
@@ -888,7 +888,13 @@ def handle_name_tap(mx, my):
                         player_name += char
                     return
 
-    if 83 <= mx <= 153 and 106 <= my <= 117:
+    # DELETEボタン
+    if 7 <= mx < 77 and 105 <= my < 116:
+        player_name = player_name[:-1]
+        return
+
+    # SUBMITボタン
+    if 83 <= mx < 153 and 105 <= my < 116:
         name = player_name.strip()[:12]
 
         if name and not submitted_this_round:
@@ -902,10 +908,6 @@ def handle_name_tap(mx, my):
             except Exception:
                 submitted_this_round = False
                 submit_status = "SAVE FAILED"
-
-    if 7 <= mx <= 77 and 106 <= my <= 117:
-        player_name = player_name[:-1]
-
 
 # -----------------------------
 # Update
