@@ -559,6 +559,7 @@ def update():
         ball_y = 3
         ball_dy = 1
 
+
     # パドルとの衝突
     if (
         ball_dy > 0
@@ -566,7 +567,19 @@ def update():
         and paddle_y - 4 <= ball_y <= paddle_y + 5
     ):
         ball_y = paddle_y - 4
-        ball_dy = -1
+
+        # 板の中央からの当たり位置を -1.0 ～ 1.0 で計算
+        paddle_center = paddle_x + paddle_w / 2
+        hit_offset = (ball_x - paddle_center) / (paddle_w / 2)
+        hit_offset = max(-1.0, min(1.0, hit_offset))
+
+        # 当たった位置に応じて反射角度を変更
+        max_angle = math.radians(55)
+        angle = hit_offset * max_angle
+
+        # 真上を基準に、左右へ角度をつける
+        ball_dx = math.sin(angle)
+        ball_dy = -math.cos(angle)
 
         combo += 1
 
