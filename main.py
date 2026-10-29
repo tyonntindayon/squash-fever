@@ -105,7 +105,7 @@ pyxel.sounds[8].set(
     "g3e3c3", "t", "7", "f", 10
 )
 pyxel.sounds[9].set(
-    "c4e4g4c5", "p", "7", "s", 8
+    "c3e3g3c4", "p", "7", "s", 8
 )
 
 pyxel.musics[0].set([0], [1], [], [])
