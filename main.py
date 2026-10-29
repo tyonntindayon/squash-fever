@@ -89,7 +89,8 @@ initial_fetch_started = False
 save_data = {
     "high_score": 0,
     "max_combo": 0,
-    "max_speed": INITIAL_BALL_SPEED
+    "max_speed": INITIAL_BALL_SPEED,
+    "last_score": 0
 }
 
 keyboard_rows = [
@@ -186,6 +187,9 @@ def load_save():
             INITIAL_BALL_SPEED,
             float(loaded.get("max_speed", INITIAL_BALL_SPEED))
         )
+        save_data["last_score"] = max(
+            0, int(loaded.get("last_score", 0))
+        )
     except Exception:
         pass
 
@@ -205,6 +209,9 @@ def save_records():
     )
     save_data["max_speed"] = max(
         save_data["max_speed"], max_speed
+    )
+    save_data["last_score"] = max(
+        save_data["last_score"], score
     )
 
     try:
@@ -516,16 +523,22 @@ async def submit_and_refresh(name, points):
 
     submit_task_running = True
     submit_status = "SENDING"
+    save_data["last_score"] = max(save_data["last_score"], int(points))
+    save_records()
 
     try:
         await send_score(name, points)
         submit_status = "SAVED"
+        leaderboard_error = ""
+        leaderboard_status = "OK"
         await refresh_leaderboard()
 
     except Exception as error:
-        submit_status = "SAVE FAILED"
+        submit_status = "LOCAL SAVE"
         leaderboard_status = "ERROR"
         leaderboard_error = str(error)[:25]
+        save_data["last_score"] = max(save_data["last_score"], int(points))
+        save_records()
 
     finally:
         submit_task_running = False
@@ -724,17 +737,13 @@ def award_hit(x, y, is_extra=False):
     combo += 1
     max_combo = max(max_combo, combo)
 
-    # コンボ5ごとに倍率上昇。最大x5。
-    multiplier = min(5, 1 + combo // 5)
-
-    # FEVER中は得点をさらに3倍にする
     fever = combo >= 10
-    fever_multiplier = 3 if fever else 1
+    fever_factor = 3 if fever else 1
+    combo_factor = 1 + combo // 3
+    speed_factor = 1 + int(ball_speed * 1.8)
+    multi_factor = 1.5 if (is_extra or extra_balls) else 1.0
 
-    # マルチボール中はヒット得点を1.5倍
-    multi_multiplier = 1.5 if (is_extra or extra_balls) else 1.0
-
-    points = int(multiplier * fever_multiplier * multi_multiplier)
+    points = int(2 * combo_factor * speed_factor * fever_factor * multi_factor)
     score += points
 
     if score > high_score:
@@ -742,7 +751,6 @@ def award_hit(x, y, is_extra=False):
         new_record = True
         save_records()
 
-    # コンボによる加速。速度は下がらない。
     combo_speed = min(
         MAX_BALL_SPEED,
         INITIAL_BALL_SPEED + combo * 0.12
@@ -760,7 +768,7 @@ def award_hit(x, y, is_extra=False):
     particle_color = 10 if fever else (11 if combo >= 5 else None)
 
     make_particles(x, y, particle_amount, particle_color)
-    add_score_popup(x, y, points, multiplier)
+    add_score_popup(x, y, points, combo_factor)
 
     play_hit_sound(combo)
 
@@ -915,7 +923,7 @@ def handle_name_tap(mx, my):
                 screen_mode = "leaderboard"
             except Exception:
                 submitted_this_round = False
-                submit_status = "SAVE FAILED"
+                submit_status = "LOCAL SAVE"
 
 
 # -----------------------------
@@ -1007,6 +1015,7 @@ def update():
                         )
                     except Exception:
                         submitted_this_round = False
+                        submit_status = "LOCAL SAVE"
 
             if pyxel.btnp(pyxel.KEY_L):
                 screen_mode = "leaderboard"
@@ -1411,6 +1420,13 @@ def draw():
                     pyxel.text(7, y, str(i + 1) + ".", 10)
                     pyxel.text(23, y, name, 7)
                     pyxel.text(112, y, points, 11)
+
+            if submit_status == "LOCAL SAVE":
+                pyxel.text(7, 98, "LOCAL SAVE", 10)
+            elif submit_status == "SAVED":
+                pyxel.text(7, 98, "RANKED", 10)
+            elif submit_status == "SENDING":
+                pyxel.text(7, 98, "SENDING...", 11)
 
             pyxel.text(
                 7, 104, submit_status[:22],
