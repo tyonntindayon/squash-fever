@@ -873,9 +873,9 @@ def handle_name_tap(mx, my):
     global player_name, screen_mode, submitted_this_round
     global submit_status
 
-    # キーボードの描画位置と同じ座標で判定
+    # キーボードの描画位置と一致させる
     for row, chars in enumerate(keyboard_rows):
-        y = 71 + row * 8
+        y = 69 + row * 8
 
         if y <= my < y + 8:
             for index, char in enumerate(chars):
@@ -899,15 +899,16 @@ def handle_name_tap(mx, my):
 
         if name and not submitted_this_round:
             submitted_this_round = True
-            screen_mode = "leaderboard"
 
             try:
                 asyncio.ensure_future(
                     submit_and_refresh(name, score)
                 )
+                screen_mode = "leaderboard"
             except Exception:
                 submitted_this_round = False
                 submit_status = "SAVE FAILED"
+
 
 # -----------------------------
 # Update
@@ -1334,16 +1335,27 @@ def draw():
         pyxel.rect(3, 28, 154, 90, 0)
         pyxel.rectb(3, 28, 154, 90, 10)
 
-        if screen_mode == "name":
+                if screen_mode == "name":
             pyxel.text(45, 31, "GAME OVER", 8)
             pyxel.text(7, 40, "SCORE:" + str(score), 7)
             pyxel.text(7, 47, "BEST:" + str(high_score), 10)
             pyxel.text(7, 53, "MAX COMBO:" + str(max_combo), 11)
-            pyxel.text(7, 59, "MAX SPEED:" + str(round(max_speed, 1)), 12)
-            pyxel.text(7, 65, "TAP KEYS TO ENTER NAME", 11)
+            pyxel.text(
+                7, 59,
+                "MAX SPEED:" + str(round(max_speed, 1)),
+                12
+            )
 
+            # 名前入力欄
+            pyxel.text(
+                7, 63,
+                "NAME:" + player_name[:12],
+                7
+            )
+
+            # キーボード
             for row, chars in enumerate(keyboard_rows):
-                y = 71 + row * 8
+                y = 69 + row * 8
 
                 for index, char in enumerate(chars):
                     x = 7 + index * 15
@@ -1354,14 +1366,15 @@ def draw():
                     label = "BK" if char == "<" else char
                     pyxel.text(x + 2, y + 1, label, 7)
 
+            # DELETEボタン
             pyxel.rect(7, 105, 70, 11, 8)
+            pyxel.rectb(7, 105, 70, 11, 7)
             pyxel.text(19, 108, "DELETE", 7)
 
+            # SUBMITボタン
             pyxel.rect(83, 105, 70, 11, 3)
+            pyxel.rectb(83, 105, 70, 11, 7)
             pyxel.text(96, 108, "SUBMIT", 7)
-
-            pyxel.text(7, 98, "NAME:" + player_name[:12], 7)
-
         elif screen_mode == "leaderboard":
             draw_logo("DOPABALL", 43, 29, 1, 8)
             draw_logo("DOPABALL", 42, 28, 1, 10)
