@@ -1,4 +1,3 @@
-
 import pyxel
 import math
 import asyncio
