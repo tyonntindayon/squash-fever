@@ -1,3 +1,4 @@
+
 import pyxel
 import math
 import asyncio
@@ -10,7 +11,7 @@ SUPABASE_URL = "https://hxjzgilnqxnnxlpqyasu.supabase.co"
 SUPABASE_KEY = "sb_publishable_sae6J_mLG2NpvPFf2MI-kQ_ozswuMhR"
 TABLE_URL = SUPABASE_URL + "/rest/v1/squash_scores"
 
-pyxel.init(WIDTH, HEIGHT, title="ドパボール")
+pyxel.init(WIDTH, HEIGHT, title="DOPABALL")
 
 COLORS = [1, 2, 5, 6, 9, 12, 13]
 
@@ -116,123 +117,83 @@ def make_particles(x, y, amount=12):
 
 
 # -----------------------------
-# 日本語タイトルのドット絵
+# タイトル画面
 # -----------------------------
-
-KANA = {
-    "ド": [
-        "0000010",
-        "0000100",
-        "0010000",
-        "0011110",
-        "0010010",
-        "0010010",
-        "0010010",
-        "0010010",
-        "0010010",
-    ],
-    "パ": [
-        "0000010",
-        "0000100",
-        "0000000",
-        "0000010",
-        "0000100",
-        "0001000",
-        "0010000",
-        "0100010",
-        "1000010",
-    ],
-    "ボ": [
-        "0000010",
-        "0000100",
-        "0000000",
-        "0011110",
-        "0001000",
-        "0011100",
-        "0001000",
-        "0010100",
-        "0100010",
-    ],
-    "ー": [
-        "0000000",
-        "0000000",
-        "0000000",
-        "1111111",
-        "0000000",
-        "0000000",
-        "0000000",
-        "0000000",
-        "0000000",
-    ],
-    "ル": [
-        "0001000",
-        "0001000",
-        "0001000",
-        "0001000",
-        "0001000",
-        "0001010",
-        "0001010",
-        "0010010",
-        "0100010",
-    ],
-}
-
-
-def draw_kana(text, x, y, scale, color):
-    cursor_x = x
-
-    for char in text:
-        pattern = KANA[char]
-
-        for row, line in enumerate(pattern):
-            for col, pixel in enumerate(line):
-                if pixel == "1":
-                    pyxel.rect(
-                        cursor_x + col * scale,
-                        y + row * scale,
-                        scale,
-                        scale,
-                        color
-                    )
-
-        cursor_x += 9 * scale
-
 
 def draw_title():
     pyxel.cls(1)
 
-    # ネオン背景ライン
+    # 動くネオン背景
     for i in range(9):
         x = (i * 21 + pyxel.frame_count) % WIDTH
         color = 5 if i % 2 == 0 else 8
         pyxel.line(x, 0, x - 25, HEIGHT, color)
 
-    # 背景の光
     for i in range(5):
         x = (i * 37 + pyxel.frame_count // 2) % WIDTH
         y = 18 + (i % 3) * 30
         pyxel.circ(x, y, 2, 12)
 
-    # タイトルの影と本体
-    draw_kana("ドパボール", 30, 36, 2, 8)
-
-    title_color = (
+    # DOPABALL ネオンロゴ
+    logo_color = (
         10 if pyxel.frame_count // 12 % 2 == 0
         else 11
     )
-    draw_kana("ドパボール", 28, 34, 2, title_color)
 
-    pyxel.line(24, 57, 136, 57, 10)
-    pyxel.line(35, 59, 125, 59, 12)
+    pyxel.text(65 - 16, 10, "DOPABALL", 8)
+    pyxel.text(64 - 16, 9, "DOPABALL", logo_color)
 
-    # 約2秒後にスタート案内
+    # ロゴの装飾
+    pyxel.line(24, 19, 136, 19, 10)
+    pyxel.line(34, 21, 126, 21, 12)
+
+    pyxel.text(52, 26, "SQUASH FEVER", 7)
+
+    # ランキングパネル
+    pyxel.rect(8, 35, 144, 55, 0)
+    pyxel.rectb(8, 35, 144, 55, 12)
+
+    pyxel.text(43, 39, "ONLINE TOP 5", 10)
+
+    if leaderboard_status == "LOADING":
+        pyxel.text(49, 52, "LOADING...", 7)
+
+    elif leaderboard_status == "ERROR":
+        pyxel.text(22, 51, "RANKING OFFLINE", 8)
+        pyxel.text(13, 61, "CHECK CONNECTION", 6)
+
+    elif not leaderboard:
+        pyxel.text(28, 54, "NO SCORES YET", 7)
+
+    else:
+        for i, item in enumerate(leaderboard[:5]):
+            y = 49 + i * 7
+
+            name = str(
+                item.get("player_name", "PLAYER")
+            )[:10]
+
+            points = str(item.get("score", 0))
+
+            # 1位は目立つ色にする
+            rank_color = 10 if i == 0 else 7
+            score_color = 10 if i == 0 else 11
+
+            pyxel.text(
+                14, y,
+                str(i + 1) + ".",
+                rank_color
+            )
+            pyxel.text(29, y, name, 7)
+            pyxel.text(112, y, points, score_color)
+
+    # スタート案内
     if title_timer < 120:
-        pyxel.text(57, 75, "GET READY...", 7)
+        pyxel.text(54, 96, "GET READY...", 7)
     elif pyxel.frame_count // 20 % 2 == 0:
-        pyxel.text(45, 75, "TAP TO START", 7)
+        pyxel.text(45, 96, "TAP TO START", 10)
 
-    pyxel.text(45, 91, "SQUASH FEVER", 10)
-    pyxel.text(39, 108, "MOVE: LEFT / RIGHT", 6)
+    pyxel.text(25, 108, "MOVE: LEFT / RIGHT", 6)
 
 
 # -----------------------------
@@ -437,7 +398,7 @@ def update():
     global submitted_this_round, initial_fetch_started
     global title_timer
 
-    # ランキングを一度読み込む
+    # 起動時にランキングを読み込む
     if not initial_fetch_started:
         initial_fetch_started = True
         launch_refresh()
@@ -655,8 +616,7 @@ def draw():
         pyxel.circ(
             WIDTH - 6 + sx,
             HEIGHT - y + sy,
-            2,
-            color
+            2, color
         )
 
     if combo >= 10:
@@ -759,29 +719,29 @@ def draw():
             )
 
         elif screen_mode == "leaderboard":
-            # ランキング画面のロゴ
-            draw_kana("ドパボール", 55, 30, 1, 8)
-            draw_kana("ドパボール", 54, 29, 1, 10)
+            # 英語ロゴ
+            pyxel.text(65 - 16, 30, "DOPABALL", 8)
+            pyxel.text(64 - 16, 29, "DOPABALL", 10)
 
-            pyxel.text(42, 43, "TOP 10 SCORES", 10)
+            pyxel.text(42, 40, "TOP 10 SCORES", 10)
 
             if leaderboard_status == "LOADING":
-                pyxel.text(43, 52, "LOADING...", 7)
+                pyxel.text(43, 49, "LOADING...", 7)
 
             elif leaderboard_status == "ERROR":
-                pyxel.text(12, 52, "RANKING OFFLINE", 8)
+                pyxel.text(12, 49, "RANKING OFFLINE", 8)
                 pyxel.text(
-                    7, 61,
+                    7, 58,
                     leaderboard_error[:25],
                     7
                 )
 
             elif not leaderboard:
-                pyxel.text(29, 52, "NO SCORES YET", 7)
+                pyxel.text(29, 49, "NO SCORES YET", 7)
 
             else:
                 for i, item in enumerate(leaderboard[:7]):
-                    y = 52 + i * 7
+                    y = 49 + i * 7
 
                     name = str(
                         item.get("player_name", "PLAYER")
