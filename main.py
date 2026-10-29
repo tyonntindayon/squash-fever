@@ -185,14 +185,17 @@ def update():
         return
 
     # パドル操作
-    if pyxel.btn(pyxel.KEY_LEFT):
-        paddle_x -= 3
+if pyxel.btn(pyxel.KEY_LEFT):
+    paddle_x -= 3
+if pyxel.btn(pyxel.KEY_RIGHT):
+    paddle_x += 3
 
-    if pyxel.btn(pyxel.KEY_RIGHT):
-        paddle_x += 3
+# タッチ操作
 
-    paddle_x = max(0, min(WIDTH - paddle_w, paddle_x))
+if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
+    paddle_x = pyxel.mouse_x - paddle_w / 2
 
+paddle_x = max(0, min(WIDTH - paddle_w, paddle_x))
     # コンボに応じてスピードアップ
     ball_speed = min(5.0, 1.5 + combo * 0.12)
 
