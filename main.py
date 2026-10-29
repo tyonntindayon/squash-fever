@@ -445,8 +445,6 @@ def draw_title():
     elif pyxel.frame_count // 20 % 2 == 0:
         pyxel.text(45, 100, "TAP TO START", 10)
 
-    pyxel.text(25, 110, "MOVE: LEFT / RIGHT", 6)
-    pyxel.text(38, 115, "BEST:" + str(high_score), 7)
     pyxel.text(WIDTH - len(TITLE_BYLINE) * 4 - 6, HEIGHT - 10, TITLE_BYLINE, 6)
 
 
@@ -1461,3 +1459,4 @@ def draw():
 
 
 pyxel.run(update, draw)
+
