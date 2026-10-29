@@ -17,13 +17,16 @@ pyxel.init(WIDTH, HEIGHT, title="DOPABALL")
 
 COLORS = [1, 2, 5, 6, 9, 12, 13]
 
-paddle_x = 65.0
-paddle_y = 105
+paddle_x = 55.0
+paddle_y = 100
 BASE_PADDLE_W = 30
 GIANT_PADDLE_W = 45
 paddle_w = BASE_PADDLE_W
 
-ball_x = 80.0
+# 右端をライフ表示用に確保
+PLAY_RIGHT = 140
+
+ball_x = 70.0
 ball_y = 60.0
 ball_dx = 1.0
 ball_dy = 1.0
@@ -448,9 +451,9 @@ def launch_refresh():
 
 def spawn_power_item():
     # 0 = GIANT PADDLE
-    # 1 = MULTI BALL + SCORE x3
+    # 1 = MULTI BALL
     item_type = pyxel.rndi(0, 1)
-    x = pyxel.rndi(10, WIDTH - 10)
+    x = pyxel.rndi(10, PLAY_RIGHT - 10)
 
     power_items.append({
         "x": float(x),
@@ -466,20 +469,20 @@ def activate_power_item(item_type):
     global extra_balls
 
     if item_type == 0:
-        # GIANT PADDLE: width 30 -> 45 for 10 seconds
+        # GIANT PADDLE
         giant_timer = 60 * 10
         paddle_w = GIANT_PADDLE_W
 
         paddle_x = max(
             0,
-            min(WIDTH - paddle_w, paddle_x)
+            min(PLAY_RIGHT - paddle_w, paddle_x)
         )
 
         power_message = "GIANT PADDLE!"
         make_particles(ball_x, ball_y, 24, 12)
 
     else:
-        # MULTI BALL: up to 3 balls total.
+        # MULTI BALL: up to 3 balls total
         current_ball_count = 1 + len(extra_balls)
         balls_to_add = max(0, 3 - current_ball_count)
 
@@ -507,7 +510,6 @@ def activate_power_item(item_type):
 def update_power_items():
     global spawn_timer, power_spawning_started
 
-    # Items do not appear at the beginning.
     if pyxel.frame_count >= 180 and ball_speed >= 2.4:
 
         if not power_spawning_started:
@@ -538,14 +540,12 @@ def update_power_items():
         item["y"] += item["speed"]
         collected = False
 
-        # Main ball collision.
         dx = ball_x - item["x"]
         dy = ball_y - item["y"]
 
         if dx * dx + dy * dy <= 9 * 9:
             collected = True
 
-        # Extra balls can collect items too.
         if not collected:
             for ball in extra_balls:
                 dx = ball["x"] - item["x"]
@@ -571,13 +571,11 @@ def draw_power_items():
         pulse = pyxel.frame_count // 5 % 2
 
         if item["type"] == 0:
-            # Giant paddle
             pyxel.circ(x, y, 5, 12)
             pyxel.circ(x, y, 3, 1)
             pyxel.text(x - 2, y - 3, "W", 7)
 
         else:
-            # Multi-ball
             pyxel.circ(x, y, 5, 11)
             pyxel.circ(x, y, 3, 1)
             pyxel.text(x - 3, y - 3, "3", 7)
@@ -593,7 +591,6 @@ def draw_power_items():
 def draw_heart(x, y, filled=True):
     color = 8 if filled else 5
 
-    # Small pixel-art heart
     pyxel.rect(x + 1, y, 3, 2, color)
     pyxel.rect(x + 6, y, 3, 2, color)
     pyxel.rect(x, y + 1, 10, 3, color)
@@ -602,7 +599,6 @@ def draw_heart(x, y, filled=True):
     pyxel.rect(x + 3, y + 8, 4, 1, color)
 
     if not filled:
-        # Dark center makes an empty heart.
         pyxel.rect(x + 3, y + 2, 4, 3, 1)
         pyxel.pset(x + 2, y + 1, 1)
         pyxel.pset(x + 7, y + 1, 1)
@@ -611,12 +607,13 @@ def draw_heart(x, y, filled=True):
 
 
 def draw_hearts():
-    pyxel.text(5, 36, "LIFE", 7)
+    # 右端の専用スペースに縦並びで表示
+    pyxel.text(145, 76, "HP", 7)
 
     for i in range(MAX_HEARTS):
         draw_heart(
-            31 + i * 13,
-            33,
+            146,
+            84 + i * 10,
             filled=(i < hearts)
         )
 
@@ -626,8 +623,8 @@ def draw_hearts():
 # -----------------------------
 
 def reset():
-    global paddle_x, paddle_w, ball_x, ball_y
-    global ball_dx, ball_dy, ball_speed
+    global paddle_x, paddle_y, paddle_w
+    global ball_x, ball_y, ball_dx, ball_dy, ball_speed
     global score, combo, game_over, hearts
     global flash_timer, shake_timer, fever_timer
     global particles, music_level
@@ -637,10 +634,11 @@ def reset():
     global power_message_timer, power_message
     global extra_balls
 
-    paddle_x = 65.0
+    paddle_x = 55.0
+    paddle_y = 100
     paddle_w = BASE_PADDLE_W
 
-    ball_x = 80.0
+    ball_x = 70.0
     ball_y = 60.0
     ball_dx = 1.0
     ball_dy = 1.0
@@ -729,6 +727,7 @@ def lose_heart_and_continue():
     global game_over, screen_mode, player_name
     global submitted_this_round
     global flash_timer, shake_timer
+    global power_message, power_message_timer
 
     # Called only when every ball has been lost.
     hearts -= 1
@@ -751,8 +750,7 @@ def lose_heart_and_continue():
         submitted_this_round = False
 
     else:
-        # Respawn a single ball; keep the game going.
-        ball_x = 80.0
+        ball_x = 70.0
         ball_y = 60.0
         ball_dx = pyxel.rndf(-0.7, 0.7)
 
@@ -787,7 +785,6 @@ def update():
         initial_fetch_started = True
         launch_refresh()
 
-    # Title screen
     if screen_mode == "title":
         title_timer += 1
 
@@ -822,7 +819,6 @@ def update():
     else:
         power_message = ""
 
-    # Particles
     for particle in particles:
         particle[0] += particle[2]
         particle[1] += particle[3]
@@ -832,7 +828,6 @@ def update():
         p for p in particles if p[4] > 0
     ]
 
-    # Game over screens
     if game_over:
         if screen_mode == "name":
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
@@ -877,22 +872,19 @@ def update():
 
         return
 
-    # -------------------------
     # Power-up timers
-    # -------------------------
-
     if giant_timer > 0:
         giant_timer -= 1
 
-    # Keep the paddle width synchronized with the active effect.
     if giant_timer > 0:
         paddle_w = GIANT_PADDLE_W
     else:
         paddle_w = BASE_PADDLE_W
 
+    # パドルは右端のライフ表示エリアに入らない
     paddle_x = max(
         0,
-        min(WIDTH - paddle_w, paddle_x)
+        min(PLAY_RIGHT - paddle_w, paddle_x)
     )
 
     # Paddle movement
@@ -907,16 +899,13 @@ def update():
 
     paddle_x = max(
         0,
-        min(WIDTH - paddle_w, paddle_x)
+        min(PLAY_RIGHT - paddle_w, paddle_x)
     )
 
     # Ball acceleration
     ball_speed = min(7.5, 1.5 + combo * 0.18)
 
-    # -------------------------
     # Main ball movement
-    # -------------------------
-
     ball_x += ball_dx * ball_speed
     ball_y += ball_dy * ball_speed
 
@@ -924,8 +913,8 @@ def update():
         ball_x = 3
         ball_dx = abs(ball_dx)
 
-    elif ball_x >= WIDTH - 4:
-        ball_x = WIDTH - 4
+    elif ball_x >= PLAY_RIGHT - 4:
+        ball_x = PLAY_RIGHT - 4
         ball_dx = -abs(ball_dx)
 
     if ball_y <= 3:
@@ -957,7 +946,6 @@ def update():
         fever = combo >= 10
         points = multiplier * (2 if fever else 1)
 
-        # Multiball automatically gives x3 reflection points.
         if len(extra_balls) > 0:
             points *= 3
 
@@ -985,10 +973,7 @@ def update():
         else:
             change_music(0)
 
-    # -------------------------
     # Extra ball movement
-    # -------------------------
-
     for ball in extra_balls[:]:
         ball["x"] += ball["dx"] * ball_speed
         ball["y"] += ball["dy"] * ball_speed
@@ -997,8 +982,8 @@ def update():
             ball["x"] = 3
             ball["dx"] = abs(ball["dx"])
 
-        elif ball["x"] >= WIDTH - 4:
-            ball["x"] = WIDTH - 4
+        elif ball["x"] >= PLAY_RIGHT - 4:
+            ball["x"] = PLAY_RIGHT - 4
             ball["dx"] = -abs(ball["dx"])
 
         if ball["y"] <= 3:
@@ -1026,7 +1011,6 @@ def update():
             multiplier = min(5, 1 + combo // 5)
             points = multiplier * (2 if combo >= 10 else 1)
 
-            # Every extra ball also earns x3 while multiball is active.
             if len(extra_balls) > 0:
                 points *= 3
 
@@ -1039,29 +1023,20 @@ def update():
         if ball["y"] > HEIGHT:
             extra_balls.remove(ball)
 
-    # -------------------------
     # Power-up items
-    # -------------------------
-
     update_power_items()
 
-    # -------------------------
-    # Heart / lives system
-    # -------------------------
+    # If the main ball falls while extra balls remain,
+    # promote one of the remaining balls.
+    if ball_y > HEIGHT and extra_balls:
+        replacement = extra_balls.pop(0)
 
-    # If the main ball falls but extra balls remain, promote one
-    # of them to the main ball. Do not lose a heart.
-    if ball_y > HEIGHT:
-        if extra_balls:
-            replacement = extra_balls.pop(0)
+        ball_x = replacement["x"]
+        ball_y = replacement["y"]
+        ball_dx = replacement["dx"]
+        ball_dy = replacement["dy"]
 
-            ball_x = replacement["x"]
-            ball_y = replacement["y"]
-            ball_dx = replacement["dx"]
-            ball_dy = replacement["dy"]
-
-    # If the main ball is still alive, the game continues.
-    # A heart is lost only after ALL balls are gone.
+    # Lose a heart only when all balls are gone.
     if ball_y > HEIGHT and not extra_balls:
         lose_heart_and_continue()
 
@@ -1096,7 +1071,7 @@ def draw():
         x = (
             i * 23
             + pyxel.frame_count * (i % 3 + 1)
-        ) % WIDTH
+        ) % PLAY_RIGHT
 
         color = COLORS[(i + phase) % len(COLORS)]
 
@@ -1115,7 +1090,7 @@ def draw():
 
         pyxel.circ(5 + sx, y + sy, 2, color)
         pyxel.circ(
-            WIDTH - 6 + sx,
+            PLAY_RIGHT - 6 + sx,
             HEIGHT - y + sy,
             2, color
         )
@@ -1188,14 +1163,14 @@ def draw():
     pyxel.text(5, 15, "BEST:" + str(high_score), 10)
     pyxel.text(5, 25, "COMBO:" + str(combo), 11)
 
-    # Hearts UI
+    # Hearts UI on the right
     draw_hearts()
 
     multiplier = min(5, 1 + combo // 5)
 
     if combo >= 5:
         pyxel.text(
-            85, 25,
+            60, 25,
             "x" + str(multiplier) + " BONUS!",
             10
         )
@@ -1203,8 +1178,8 @@ def draw():
     ball_count = 1 + len(extra_balls)
 
     if ball_count > 1:
-        pyxel.text(110, 5, "BALLS:" + str(ball_count), 11)
-        pyxel.text(110, 15, "POINTS x3", 10)
+        pyxel.text(83, 5, "BALLS:" + str(ball_count), 11)
+        pyxel.text(83, 15, "POINTS x3", 10)
 
     # Active power-up indicators
     if giant_timer > 0:
