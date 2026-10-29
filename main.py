@@ -29,7 +29,7 @@ TABLE_URL = SUPABASE_URL + "/rest/v1/squash_scores"
 
 SAVE_FILE = "dopaball_save.json"
 GAME_TITLE = "DOPABALL"
-TITLE_BYLINE = "created by TugumuKudo"
+TITLE_BYLINE = "created by Tugumu Kudo"
 
 pyxel.init(WIDTH, HEIGHT, title=GAME_TITLE + " - " + TITLE_BYLINE)
 
@@ -409,9 +409,7 @@ def draw_title():
     pyxel.line(12, 23, 148, 23, 10)
     pyxel.line(24, 25, 136, 25, 12)
     pyxel.text(52, 29, "SQUASH FEVER", 7)
-
-    # title credit sits in the clean whitespace above the leaderboard panel
-    pyxel.text(26, 32, TITLE_BYLINE, 6)
+    pyxel.text(26, 35, TITLE_BYLINE, 6)
 
     pyxel.rect(8, 35, 144, 61, 0)
     pyxel.rectb(8, 35, 144, 61, 12)
@@ -449,6 +447,7 @@ def draw_title():
 
     pyxel.text(25, 110, "MOVE: LEFT / RIGHT", 6)
     pyxel.text(38, 115, "BEST:" + str(high_score), 7)
+    pyxel.text(WIDTH - len(TITLE_BYLINE) * 4 - 6, HEIGHT - 10, TITLE_BYLINE, 6)
 
 
 # -----------------------------
