@@ -197,6 +197,7 @@ if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
 
 paddle_x = max(0, min(WIDTH - paddle_w, paddle_x))
     # コンボに応じてスピードアップ
+
     ball_speed = min(5.0, 1.5 + combo * 0.12)
 
     # ボール移動
