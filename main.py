@@ -179,15 +179,13 @@ def update():
     particles[:] = [p for p in particles if p[4] > 0]
 
     # ゲームオーバー
-    if game_over:
+if game_over:
     if (
         pyxel.btnp(pyxel.KEY_SPACE)
         or pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
-        or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A)
     ):
         reset()
     return
-    
     # パドル操作
 if pyxel.btn(pyxel.KEY_LEFT):
     paddle_x -= 3
