@@ -1000,6 +1000,12 @@ def start_ranking_test():
 # Name entry
 # -----------------------------
 
+# Legacy compatibility for older name-entry update paths.
+# Name entry now uses the in-game virtual keyboard, so no DOM overlay sync is needed.
+def sync_name_input_overlay():
+    return
+
+
 # -----------------------------
 # Update
 # -----------------------------
