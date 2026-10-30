@@ -1072,7 +1072,6 @@ def update():
 
     score_popups[:] = [p for p in score_popups if p["timer"] > 0]
 
-    sync_name_input_overlay()
 
     if game_over:
         if screen_mode == "name":
