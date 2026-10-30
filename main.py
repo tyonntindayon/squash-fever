@@ -1024,7 +1024,7 @@ def update():
 
     # DEBUG: Press T during gameplay to set the score to 1,000,000.
     if screen_mode == "game" and not game_over and pyxel.btnp(pyxel.KEY_T):
-        score = 1_000_000
+        score = 2_000_000
         if score > high_score:
             high_score = score
             new_record = True
