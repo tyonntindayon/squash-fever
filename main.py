@@ -352,7 +352,7 @@ UI_FONT = {
     "9":["01110","10001","10001","01111","00001","00001","01110"],
     ":":["00000","00100","00100","00000","00100","00100","00000"],
     ".":["00000","00000","00000","00000","00000","00110","00110"],
-    "-":["00000","00000","00000","11111","00000","00000","00000"],
+    "-": ["00000","00000","00000","11111","00000","00000","00000"],
     "!":["00100","00100","00100","00100","00100","00000","00100"],
     "/":["00001","00010","00010","00100","01000","01000","10000"],
     " ":["00000"] * 7,
@@ -1024,7 +1024,13 @@ def update():
 
     # Browser-friendly debug button: click the on-screen area to set score.
     if screen_mode == "game" and not game_over:
-        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+        if pyxel.btnp(pyxel.KEY_T):
+            score = 1_000_000
+            if score > high_score:
+                high_score = score
+                new_record = True
+                save_records()
+        elif pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             mx = pyxel.mouse_x
             my = pyxel.mouse_y
             if 50 <= mx <= 110 and 16 <= my <= 29:
