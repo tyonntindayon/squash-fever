@@ -692,21 +692,16 @@ def update_power_items():
         item["y"] += item["speed"]
         collected = False
 
-        if not ball_attached:
-            dx = ball_x - item["x"]
-            dy = ball_y - item["y"]
+        paddle_left = paddle_x
+        paddle_right = paddle_x + paddle_w
+        paddle_top = paddle_y
+        paddle_bottom = paddle_y + 5
 
-            if dx * dx + dy * dy <= 9 * 9:
-                collected = True
-
-        if not collected:
-            for ball in extra_balls:
-                dx = ball["x"] - item["x"]
-                dy = ball["y"] - item["y"]
-
-                if dx * dx + dy * dy <= 9 * 9:
-                    collected = True
-                    break
+        if (
+            paddle_left <= item["x"] <= paddle_right
+            and paddle_top <= item["y"] <= paddle_bottom
+        ):
+            collected = True
 
         if collected:
             activate_power_item(item["type"])
