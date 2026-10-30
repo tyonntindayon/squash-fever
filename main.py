@@ -379,7 +379,7 @@ def draw_title():
 
     pyxel.line(12, 23, 148, 23, 10)
     pyxel.line(24, 25, 136, 25, 12)
-    pyxel.text(52, 29, "TYONTIN GAMES", 7)
+    pyxel.text(52, 29, "TYON GAMES", 7)
     pyxel.text(30, 35, TITLE_BYLINE, 6)
 
     pyxel.rect(8, 35, 144, 61, 0)
