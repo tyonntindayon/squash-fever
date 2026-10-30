@@ -1020,15 +1020,15 @@ def update():
         if title_timer >= 120 and (pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.KEY_RETURN)):
             reset()
 
-        # DEBUG: Press T during gameplay to set the score to 1,000,000.
-    if not game_over and pyxel.btnp(pyxel.KEY_T):
+        return
+
+    # DEBUG: Press T during gameplay to set the score to 1,000,000.
+    if screen_mode == "game" and not game_over and pyxel.btnp(pyxel.KEY_T):
         score = 1_000_000
         if score > high_score:
             high_score = score
             new_record = True
             save_records()
-
-    return
 
     if flash_timer > 0:
         flash_timer -= 1
