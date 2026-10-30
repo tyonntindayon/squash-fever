@@ -593,7 +593,7 @@ async def refresh_leaderboard():
 
     except Exception as error:
         leaderboard_status = "ERROR"
-        leaderboard_error = str(error)[:25]
+        leaderboard_error = str(error)[:66]
 
     finally:
         fetch_task_running = False
@@ -1392,7 +1392,10 @@ def draw():
             elif leaderboard_status == "ERROR":
                 pyxel.text(12, 59, "RANKING OFFLINE", 8)
                 pyxel.text(7, 68, "SCORE SAVED LOCALLY", 7)
-                pyxel.text(7, 77, str(leaderboard_error or "")[:25], 7)
+                error_text = str(leaderboard_error or "")
+                pyxel.text(7, 77, error_text[:22], 7)
+                pyxel.text(7, 84, error_text[22:44], 7)
+                pyxel.text(7, 91, error_text[44:66], 7)
             elif not leaderboard:
                 pyxel.text(29, 59, "NO SCORES YET", 7)
             else:
