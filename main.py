@@ -805,9 +805,10 @@ def lose_heart_and_continue():
 
     if shield_timer > 0:
         shield_timer = 0
+        attach_ball_to_paddle()
         power_message = "SHIELD BLOCK!"
         power_message_timer = 70
-        make_particles(ball_x, ball_y, 18, 9)
+        make_particles(paddle_x + paddle_w / 2, paddle_y - 8, 18, 9)
         return
 
     hearts -= 1
