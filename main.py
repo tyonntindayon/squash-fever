@@ -26,10 +26,10 @@ TIME_ACCELERATION = 0.00035
 SUPABASE_URL = "https://hxjzgilnqxnnxlpqyasu.supabase.co"
 SUPABASE_KEY = "sb_publishable_sae6J_mLG2NpvPFf2MI-kQ_ozswuMhR"
 TABLE_URL = SUPABASE_URL + "/rest/v1/squash_scores"
-
-SAVE_FILE = "dopaball_save.json"
 GAME_TITLE = "DOPABALL"
-TITLE_BYLINE = "created by TugumuKudo"
+TITLE_BYLINE = "A Tgames Original"
+
+pyxel.init(WIDTH, HEIGHT, title=GAME_TITLE)
 
 pyxel.init(WIDTH, HEIGHT, title=GAME_TITLE + " - " + TITLE_BYLINE)
 
