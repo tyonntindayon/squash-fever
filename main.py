@@ -997,7 +997,7 @@ def sync_name_input_overlay():
 def update():
     global paddle_x, paddle_w
     global ball_x, ball_y, ball_dx, ball_dy, ball_speed
-    global score, combo, game_over, flash_timer, shake_timer
+    global score, high_score, combo, game_over, flash_timer, shake_timer
     global fever_timer, player_name, screen_mode
     global initial_fetch_started, title_timer
     global giant_timer, power_message_timer, power_message
@@ -1020,7 +1020,15 @@ def update():
         if title_timer >= 120 and (pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.KEY_RETURN)):
             reset()
 
-        return
+        # DEBUG: Press T during gameplay to set the score to 1,000,000.
+    if not game_over and pyxel.btnp(pyxel.KEY_T):
+        score = 1_000_000
+        if score > high_score:
+            high_score = score
+            new_record = True
+            save_records()
+
+    return
 
     if flash_timer > 0:
         flash_timer -= 1
