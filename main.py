@@ -106,19 +106,19 @@ keyboard_rows = [
 ]
 
 NAME_INPUT_X = 8
-NAME_INPUT_Y = 72
+NAME_INPUT_Y = 78
 NAME_INPUT_W = 144
 NAME_INPUT_H = 8
 
 KEYBOARD_START_X = 8
-KEYBOARD_START_Y = 82
+KEYBOARD_START_Y = 88
 KEYBOARD_KEY_W = 12
-KEYBOARD_KEY_H = 6
+KEYBOARD_KEY_H = 5
 KEYBOARD_KEY_GAP = 1
 KEYBOARD_ROW_GAP = 1
 
-DELETE_BUTTON = (8, 110, 56, 8)
-SUBMIT_BUTTON = (92, 110, 60, 8)
+DELETE_BUTTON = (8, 112, 68, 7)
+SUBMIT_BUTTON = (84, 112, 68, 7)
 
 
 def get_name_input_rect():
@@ -1354,23 +1354,23 @@ def draw():
         pyxel.text(34, 82, power_message, color)
 
     if game_over:
-        pyxel.rect(3, 28, 154, 90, 0)
-        pyxel.rectb(3, 28, 154, 90, 10)
+        pyxel.rect(1, 19, 158, 100, 0)
+        pyxel.rectb(1, 19, 158, 100, 10)
 
         if screen_mode == "name":
             # Clear hierarchy: game identity, result, then the one action to take.
-            draw_ui_text("GAME OVER", 53, 30, 8)
-            draw_ui_text("DOPABALL", 52, 39, 10)
+            draw_ui_text("GAME OVER", 53, 23, 8)
+            draw_ui_text("DOPABALL", 52, 33, 10)
 
-            pyxel.rect(9, 49, 142, 1, 5)
-            draw_ui_text("SCORE", 12, 54, 7)
-            draw_ui_text(str(score), 52, 54, 10)
-            draw_ui_text("BEST", 91, 54, 7)
-            draw_ui_text(str(high_score), 119, 54, 10)
+            pyxel.rect(9, 44, 142, 1, 5)
+            draw_ui_text("SCORE", 12, 49, 7)
+            draw_ui_text(str(score), 52, 49, 10)
+            draw_ui_text("BEST", 91, 49, 7)
+            draw_ui_text(str(high_score), 119, 49, 10)
 
-            pyxel.text(12, 62, "MAX COMBO:" + str(max_combo), 11)
-            pyxel.text(91, 62, "MAX SPEED:" + str(round(max_speed, 1)), 12)
-            draw_ui_text("ENTER YOUR NAME", 12, 66, 7)
+            pyxel.text(12, 60, "MAX COMBO:" + str(max_combo), 11)
+            pyxel.text(91, 60, "MAX SPEED:" + str(round(max_speed, 1)), 12)
+            draw_ui_text("ENTER YOUR NAME", 12, 69, 7)
 
             name_x, name_y, name_w, name_h = get_name_input_rect()
             pyxel.rect(name_x, name_y, name_w, name_h, 1)
@@ -1389,12 +1389,12 @@ def draw():
             delete_x, delete_y, delete_w, delete_h = get_delete_button_rect()
             pyxel.rect(delete_x, delete_y, delete_w, delete_h, 8)
             pyxel.rectb(delete_x, delete_y, delete_w, delete_h, 7)
-            pyxel.text(delete_x + 12, delete_y + 2, "DELETE", 7)
+            pyxel.text(delete_x + 17, delete_y + 1, "DELETE", 7)
 
             submit_x, submit_y, submit_w, submit_h = get_submit_button_rect()
             pyxel.rect(submit_x, submit_y, submit_w, submit_h, 3)
             pyxel.rectb(submit_x, submit_y, submit_w, submit_h, 7)
-            pyxel.text(submit_x + 13, submit_y + 2, "SUBMIT", 7)
+            pyxel.text(submit_x + 20, submit_y + 1, "SUBMIT", 7)
 
         elif screen_mode == "leaderboard":
             draw_logo("DOPABALL", 43, 29, 1, 8)
