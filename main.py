@@ -802,7 +802,7 @@ def lose_heart_and_continue():
     global hearts, extra_balls, combo, game_over
     global screen_mode, player_name, submitted_this_round
     global flash_timer, shake_timer, power_message
-    global power_message_timer, ball_attached
+    global power_message_timer, ball_attached, shield_timer
 
     if shield_timer > 0:
         shield_timer = 0
