@@ -1022,18 +1022,17 @@ def update():
 
         return
 
-    # DEBUG: Press T, F1, or 1 during gameplay to set the score to 2,000,000.
-    debug_pressed = (
-        pyxel.btnp(pyxel.KEY_T)
-        or pyxel.btnp(pyxel.KEY_F1)
-        or pyxel.btnp(pyxel.KEY_1)
-    )
-    if screen_mode == "game" and not game_over and debug_pressed:
-        score = 2_000_000
-        if score > high_score:
-            high_score = score
-            new_record = True
-            save_records()
+    # Browser-friendly debug button: click the on-screen area to set score.
+    if screen_mode == "game" and not game_over:
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            mx = pyxel.mouse_x
+            my = pyxel.mouse_y
+            if 112 <= mx <= 158 and 14 <= my <= 25:
+                score = 2_000_000
+                if score > high_score:
+                    high_score = score
+                    new_record = True
+                    save_records()
 
     if flash_timer > 0:
         flash_timer -= 1
@@ -1230,6 +1229,11 @@ def draw_game_hud():
         draw_heart(123 + i * 11, 1, filled=(i < hearts))
 
     pyxel.text(2, 7, "C:" + str(combo), 11)
+
+    # DEBUG button (browser click)
+    pyxel.rect(112, 14, 46, 11, 0)
+    pyxel.rectb(112, 14, 46, 11, 10)
+    pyxel.text(115, 17, "DEBUG+2M", 10)
 
     ball_count = 1 + len(extra_balls)
     pyxel.text(56, 7, "BALL:" + str(ball_count), 11)
