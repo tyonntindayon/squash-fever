@@ -106,19 +106,19 @@ keyboard_rows = [
 ]
 
 NAME_INPUT_X = 8
-NAME_INPUT_Y = 64
+NAME_INPUT_Y = 72
 NAME_INPUT_W = 144
 NAME_INPUT_H = 8
 
 KEYBOARD_START_X = 8
-KEYBOARD_START_Y = 70
+KEYBOARD_START_Y = 82
 KEYBOARD_KEY_W = 12
-KEYBOARD_KEY_H = 7
+KEYBOARD_KEY_H = 6
 KEYBOARD_KEY_GAP = 1
 KEYBOARD_ROW_GAP = 1
 
-DELETE_BUTTON = (8, 103, 56, 10)
-SUBMIT_BUTTON = (92, 103, 60, 10)
+DELETE_BUTTON = (8, 110, 56, 8)
+SUBMIT_BUTTON = (92, 110, 60, 8)
 
 
 def get_name_input_rect():
@@ -1368,9 +1368,9 @@ def draw():
             draw_ui_text("BEST", 91, 54, 7)
             draw_ui_text(str(high_score), 119, 54, 10)
 
-            pyxel.text(12, 64, "MAX COMBO:" + str(max_combo), 11)
-            pyxel.text(91, 64, "MAX SPEED:" + str(round(max_speed, 1)), 12)
-            draw_ui_text("ENTER YOUR NAME", 12, 73, 7)
+            pyxel.text(12, 62, "MAX COMBO:" + str(max_combo), 11)
+            pyxel.text(91, 62, "MAX SPEED:" + str(round(max_speed, 1)), 12)
+            draw_ui_text("ENTER YOUR NAME", 12, 66, 7)
 
             name_x, name_y, name_w, name_h = get_name_input_rect()
             pyxel.rect(name_x, name_y, name_w, name_h, 1)
@@ -1385,7 +1385,6 @@ def draw():
                     label = "BK" if char == "<" else char
                     pyxel.text(x + 2, y + 1, label, 7)
 
-            pyxel.text(8, 96, "TAP KEYS TO ENTER", 7)
 
             delete_x, delete_y, delete_w, delete_h = get_delete_button_rect()
             pyxel.rect(delete_x, delete_y, delete_w, delete_h, 8)
