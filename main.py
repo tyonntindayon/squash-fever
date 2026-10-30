@@ -98,44 +98,76 @@ save_data = {
     "last_score": 0
 }
 
-keyboard_rows = [
-    "ABCDEFGHIJKLM",
-    "NOPQRSTUVWXYZ",
-    "0123456789_-<"
-]
-
 NAME_INPUT_X = 8
-NAME_INPUT_Y = 75
+NAME_INPUT_Y = 77
 NAME_INPUT_W = 144
-NAME_INPUT_H = 8
-
-KEYBOARD_START_X = 9
-KEYBOARD_START_Y = 84
-KEYBOARD_KEY_W = 10
-KEYBOARD_KEY_H = 7
-KEYBOARD_KEY_GAP = 1
-KEYBOARD_ROW_GAP = 1
-
-DELETE_BUTTON = (8, 110, 68, 7)
-SUBMIT_BUTTON = (84, 110, 68, 7)
+NAME_INPUT_H = 12
+SUBMIT_BUTTON = (38, 98, 84, 10)
+name_input_element = None
 
 
 def get_name_input_rect():
     return (NAME_INPUT_X, NAME_INPUT_Y, NAME_INPUT_W, NAME_INPUT_H)
 
 
-def get_keyboard_key_rect(row_index, key_index):
-    x = KEYBOARD_START_X + key_index * (KEYBOARD_KEY_W + KEYBOARD_KEY_GAP)
-    y = KEYBOARD_START_Y + row_index * (KEYBOARD_KEY_H + KEYBOARD_ROW_GAP)
-    return (x, y, KEYBOARD_KEY_W, KEYBOARD_KEY_H)
-
-
-def get_delete_button_rect():
-    return DELETE_BUTTON
-
-
 def get_submit_button_rect():
     return SUBMIT_BUTTON
+
+
+def sync_name_input_overlay():
+    global name_input_element, player_name
+
+    try:
+        from js import document
+    except Exception:
+        return
+
+    if name_input_element is None:
+        name_input_element = document.createElement("input")
+        name_input_element.type = "text"
+        name_input_element.maxLength = 12
+        name_input_element.autocomplete = "off"
+        name_input_element.autocapitalize = "characters"
+        name_input_element.spellcheck = False
+        name_input_element.placeholder = "PLAYER NAME"
+        name_input_element.setAttribute("aria-label", "Player name")
+        style = name_input_element.style
+        style.position = "fixed"
+        style.zIndex = "1001"
+        style.margin = "0"
+        style.padding = "0 8px"
+        style.boxSizing = "border-box"
+        style.background = "#111126"
+        style.color = "#ffffff"
+        style.border = "2px solid #ffd83d"
+        style.borderRadius = "3px"
+        style.fontFamily = "monospace"
+        style.fontWeight = "bold"
+        style.letterSpacing = "1px"
+        style.outline = "none"
+        style.display = "none"
+        document.body.appendChild(name_input_element)
+
+    visible = bool(game_over and screen_mode == "name")
+    name_input_element.style.display = "block" if visible else "none"
+    if not visible:
+        return
+
+    canvas = document.getElementById("canvas")
+    if canvas is not None:
+        rect = canvas.getBoundingClientRect()
+        scale = rect.width / WIDTH
+        name_input_element.style.left = str(rect.left + NAME_INPUT_X * scale) + "px"
+        name_input_element.style.top = str(rect.top + NAME_INPUT_Y * scale) + "px"
+        name_input_element.style.width = str(NAME_INPUT_W * scale) + "px"
+        name_input_element.style.height = str(NAME_INPUT_H * scale) + "px"
+        name_input_element.style.fontSize = str(max(16, 4 * scale)) + "px"
+
+    if document.activeElement != name_input_element:
+        name_input_element.value = str(player_name or "")[:12]
+    typed_name = str(name_input_element.value or "").strip().upper()[:12]
+    if typed_name != str(player_name or ""):
+        player_name = typed_name
 
 
 def submit_current_name():
@@ -968,35 +1000,6 @@ def reset():
 # Name entry
 # -----------------------------
 
-def handle_name_tap(mx, my):
-    global player_name, screen_mode, submitted_this_round
-    global submit_status
-
-    player_name = str(player_name or "")
-
-    for row, chars in enumerate(keyboard_rows):
-        row_y = KEYBOARD_START_Y + row * (KEYBOARD_KEY_H + KEYBOARD_ROW_GAP)
-        if row_y <= my < row_y + KEYBOARD_KEY_H:
-            for index, char in enumerate(chars):
-                x, y, w, h = get_keyboard_key_rect(row, index)
-                if x <= mx < x + w and y <= my < y + h:
-                    if char == "<":
-                        player_name = player_name[:-1]
-                    elif len(player_name) < 12:
-                        player_name += char
-                    return
-
-    delete_x, delete_y, delete_w, delete_h = get_delete_button_rect()
-    if delete_x <= mx < delete_x + delete_w and delete_y <= my < delete_y + delete_h:
-        player_name = player_name[:-1]
-        return
-
-    submit_x, submit_y, submit_w, submit_h = get_submit_button_rect()
-    if submit_x <= mx < submit_x + submit_w and submit_y <= my < submit_y + submit_h:
-        submit_current_name()
-        return
-
-
 # -----------------------------
 # Update
 # -----------------------------
@@ -1065,10 +1068,14 @@ def update():
 
     score_popups[:] = [p for p in score_popups if p["timer"] > 0]
 
+    sync_name_input_overlay()
+
     if game_over:
         if screen_mode == "name":
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-                handle_name_tap(pyxel.mouse_x, pyxel.mouse_y)
+                submit_x, submit_y, submit_w, submit_h = get_submit_button_rect()
+                if submit_x <= pyxel.mouse_x < submit_x + submit_w and submit_y <= pyxel.mouse_y < submit_y + submit_h:
+                    submit_current_name()
 
             if pyxel.btnp(pyxel.KEY_BACKSPACE):
                 player_name = str(player_name or "")[:-1]
@@ -1357,7 +1364,6 @@ def draw():
         pyxel.rectb(1, 19, 158, 100, 10)
 
         if screen_mode == "name":
-            # Clear hierarchy: game identity, result, then the one action to take.
             draw_ui_text("GAME OVER", 53, 23, 8)
             draw_ui_text("DOPABALL", 52, 33, 10)
 
@@ -1369,32 +1375,17 @@ def draw():
 
             pyxel.text(12, 60, "MAX COMBO:" + str(max_combo), 11)
             pyxel.text(91, 60, "MAX SPEED:" + str(round(max_speed, 1)), 12)
-            draw_ui_text("ENTER YOUR NAME", 12, 66, 7)
+            draw_ui_text("ENTER YOUR NAME", 12, 68, 7)
 
             name_x, name_y, name_w, name_h = get_name_input_rect()
             pyxel.rect(name_x, name_y, name_w, name_h, 1)
             pyxel.rectb(name_x, name_y, name_w, name_h, 10)
-            pyxel.text(name_x + 3, name_y + 1, str(player_name or "")[:12], 7)
-
-            for row, chars in enumerate(keyboard_rows):
-                for index, char in enumerate(chars):
-                    x, y, w, h = get_keyboard_key_rect(row, index)
-                    pyxel.rect(x, y, w, h, 1)
-                    pyxel.rectb(x, y, w, h, 10)
-                    label = "BK" if char == "<" else char
-                    label_x = x + (1 if label == "BK" else 3)
-                    pyxel.text(label_x, y + 1, label, 7)
-
-
-            delete_x, delete_y, delete_w, delete_h = get_delete_button_rect()
-            pyxel.rect(delete_x, delete_y, delete_w, delete_h, 8)
-            pyxel.rectb(delete_x, delete_y, delete_w, delete_h, 7)
-            pyxel.text(delete_x + 17, delete_y + 1, "DELETE", 7)
+            pyxel.text(12, 92, "TYPE IN THE FIELD ABOVE", 7)
 
             submit_x, submit_y, submit_w, submit_h = get_submit_button_rect()
             pyxel.rect(submit_x, submit_y, submit_w, submit_h, 3)
             pyxel.rectb(submit_x, submit_y, submit_w, submit_h, 7)
-            pyxel.text(submit_x + 20, submit_y + 1, "SUBMIT", 7)
+            pyxel.text(submit_x + 25, submit_y + 2, "SUBMIT", 7)
 
         elif screen_mode == "leaderboard":
             draw_logo("DOPABALL", 43, 29, 1, 8)
