@@ -996,6 +996,20 @@ def reset():
     change_music(0)
 
 
+def start_ranking_test():
+    """Open the name-entry screen with a one-off 600,000-point test score."""
+    global score, high_score, hearts, game_over, screen_mode, new_record
+
+    reset()
+    score = 600000
+    high_score = max(high_score, score)
+    hearts = 0
+    game_over = True
+    new_record = True
+    screen_mode = "name"
+    save_records()
+
+
 # -----------------------------
 # Name entry
 # -----------------------------
@@ -1020,6 +1034,10 @@ def update():
 
     if screen_mode == "title":
         title_timer += 1
+
+        if pyxel.btnp(pyxel.KEY_T):
+            start_ranking_test()
+            return
 
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             if period_tab_clicked(pyxel.mouse_x, pyxel.mouse_y, 39):
