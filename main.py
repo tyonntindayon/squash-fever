@@ -510,7 +510,8 @@ async def get_json(url):
     )
 
     if response.status >= 400:
-        raise RuntimeError("HTTP " + str(response.status))
+        detail = await response.text()
+        raise RuntimeError("HTTP " + str(response.status) + " " + detail[:80])
 
     return await response.json()
 
@@ -534,7 +535,8 @@ async def send_score(name, points):
     )
 
     if response.status >= 400:
-        raise RuntimeError("HTTP " + str(response.status))
+        detail = await response.text()
+        raise RuntimeError("HTTP " + str(response.status) + " " + detail[:80])
 
 
 async def refresh_leaderboard():
