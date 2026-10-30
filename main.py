@@ -99,26 +99,25 @@ save_data = {
 }
 
 keyboard_rows = [
-    "ABCDEFGHIJ",
-    "KLMNOPQRST",
-    "UVWXYZ0123",
-    "456789_-<"
+    "ABCDEFGHIJKLM",
+    "NOPQRSTUVWXYZ",
+    "0123456789_-<"
 ]
 
 NAME_INPUT_X = 8
-NAME_INPUT_Y = 78
+NAME_INPUT_Y = 75
 NAME_INPUT_W = 144
 NAME_INPUT_H = 8
 
-KEYBOARD_START_X = 8
-KEYBOARD_START_Y = 88
-KEYBOARD_KEY_W = 12
-KEYBOARD_KEY_H = 5
+KEYBOARD_START_X = 9
+KEYBOARD_START_Y = 84
+KEYBOARD_KEY_W = 10
+KEYBOARD_KEY_H = 7
 KEYBOARD_KEY_GAP = 1
 KEYBOARD_ROW_GAP = 1
 
-DELETE_BUTTON = (8, 112, 68, 7)
-SUBMIT_BUTTON = (84, 112, 68, 7)
+DELETE_BUTTON = (8, 110, 68, 7)
+SUBMIT_BUTTON = (84, 110, 68, 7)
 
 
 def get_name_input_rect():
@@ -1370,7 +1369,7 @@ def draw():
 
             pyxel.text(12, 60, "MAX COMBO:" + str(max_combo), 11)
             pyxel.text(91, 60, "MAX SPEED:" + str(round(max_speed, 1)), 12)
-            draw_ui_text("ENTER YOUR NAME", 12, 69, 7)
+            draw_ui_text("ENTER YOUR NAME", 12, 66, 7)
 
             name_x, name_y, name_w, name_h = get_name_input_rect()
             pyxel.rect(name_x, name_y, name_w, name_h, 1)
@@ -1383,7 +1382,8 @@ def draw():
                     pyxel.rect(x, y, w, h, 1)
                     pyxel.rectb(x, y, w, h, 10)
                     label = "BK" if char == "<" else char
-                    pyxel.text(x + 2, y + 1, label, 7)
+                    label_x = x + (1 if label == "BK" else 3)
+                    pyxel.text(label_x, y + 1, label, 7)
 
 
             delete_x, delete_y, delete_w, delete_h = get_delete_button_rect()
