@@ -15,7 +15,7 @@ BALL_MIN_X = 4
 BALL_MAX_X = WIDTH - 4
 
 BASE_PADDLE_W = 30
-GIANT_PADDLE_W = 45
+GIANT_PADDLE_W = 42
 MAX_HEARTS = 3
 MAX_BALLS = 7
 
@@ -62,6 +62,9 @@ hearts = MAX_HEARTS
 flash_timer = 0
 shake_timer = 0
 fever_timer = 0
+slow_timer = 0
+shield_timer = 0
+score_boost_timer = 0
 music_level = -1
 particles = []
 score_popups = []
@@ -184,7 +187,6 @@ def change_music(level):
 
 
 def play_hit_sound(combo_value):
-    # コンボに応じて音の高さ・種類を変化させる
     if combo_value >= 10:
         pyxel.play(3, 7)
     elif combo_value >= 5:
@@ -197,10 +199,7 @@ def make_particles(x, y, amount=12, color=None):
     for _ in range(amount):
         angle = pyxel.rndf(0, math.pi * 2)
         speed = pyxel.rndf(0.5, 2.5)
-        particle_color = (
-            color if color is not None
-            else pyxel.rndi(8, 15)
-        )
+        particle_color = color if color is not None else pyxel.rndi(8, 15)
 
         particles.append([
             float(x), float(y),
@@ -232,19 +231,10 @@ def load_save():
         with open(SAVE_FILE, "r", encoding="utf-8") as file:
             loaded = json.load(file)
 
-        save_data["high_score"] = max(
-            0, int(loaded.get("high_score", 0))
-        )
-        save_data["max_combo"] = max(
-            0, int(loaded.get("max_combo", 0))
-        )
-        save_data["max_speed"] = max(
-            INITIAL_BALL_SPEED,
-            float(loaded.get("max_speed", INITIAL_BALL_SPEED))
-        )
-        save_data["last_score"] = max(
-            0, int(loaded.get("last_score", 0))
-        )
+        save_data["high_score"] = max(0, int(loaded.get("high_score", 0)))
+        save_data["max_combo"] = max(0, int(loaded.get("max_combo", 0)))
+        save_data["max_speed"] = max(INITIAL_BALL_SPEED, float(loaded.get("max_speed", INITIAL_BALL_SPEED)))
+        save_data["last_score"] = max(0, int(loaded.get("last_score", 0)))
     except Exception:
         pass
 
@@ -256,24 +246,15 @@ def load_save():
 def save_records():
     global save_data
 
-    save_data["high_score"] = max(
-        save_data["high_score"], high_score
-    )
-    save_data["max_combo"] = max(
-        save_data["max_combo"], max_combo
-    )
-    save_data["max_speed"] = max(
-        save_data["max_speed"], max_speed
-    )
-    save_data["last_score"] = max(
-        save_data["last_score"], score
-    )
+    save_data["high_score"] = max(save_data["high_score"], high_score)
+    save_data["max_combo"] = max(save_data["max_combo"], max_combo)
+    save_data["max_speed"] = max(save_data["max_speed"], max_speed)
+    save_data["last_score"] = max(save_data["last_score"], score)
 
     try:
         with open(SAVE_FILE, "w", encoding="utf-8") as file:
             json.dump(save_data, file)
     except Exception:
-        # 保存に失敗してもゲームを止めない
         pass
 
 
@@ -323,18 +304,12 @@ def draw_period_tabs(y):
     daily_color = 10 if selected_period == "DAILY" else 5
     pyxel.rect(22, y, 52, 9, daily_color)
     pyxel.rectb(22, y, 52, 9, 7)
-    pyxel.text(
-        32, y + 2, "DAILY",
-        0 if selected_period == "DAILY" else 7
-    )
+    pyxel.text(32, y + 2, "DAILY", 0 if selected_period == "DAILY" else 7)
 
     monthly_color = 10 if selected_period == "MONTHLY" else 5
     pyxel.rect(86, y, 52, 9, monthly_color)
     pyxel.rectb(86, y, 52, 9, 7)
-    pyxel.text(
-        94, y + 2, "MONTHLY",
-        0 if selected_period == "MONTHLY" else 7
-    )
+    pyxel.text(94, y + 2, "MONTHLY", 0 if selected_period == "MONTHLY" else 7)
 
 
 def period_tab_clicked(mx, my, y):
@@ -363,18 +338,14 @@ def get_period_bounds(period):
     now = datetime.now(JST)
 
     if period == "MONTHLY":
-        start = now.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         if start.month == 12:
             end = start.replace(year=start.year + 1, month=1)
         else:
             end = start.replace(month=start.month + 1)
     else:
-        start = now.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         end = start + timedelta(days=1)
 
     return start, end
@@ -430,15 +401,9 @@ def draw_title():
             name = str(item.get("player_name", "PLAYER"))[:10]
             points = str(item.get("score", 0))
 
-            pyxel.text(
-                14, y, str(i + 1) + ".",
-                10 if i == 0 else 7
-            )
+            pyxel.text(14, y, str(i + 1) + ".", 10 if i == 0 else 7)
             pyxel.text(29, y, name, 7)
-            pyxel.text(
-                112, y, points,
-                10 if i == 0 else 11
-            )
+            pyxel.text(112, y, points, 10 if i == 0 else 11)
 
     if title_timer < 120:
         pyxel.text(54, 100, "GET READY...", 7)
@@ -487,10 +452,7 @@ async def send_score(name, points):
             "Content-Type": "application/json",
             "Prefer": "return=minimal"
         },
-        body=json.dumps([{
-            "player_name": name,
-            "score": int(points)
-        }])
+        body=json.dumps([{"player_name": name, "score": int(points)}])
     )
 
     if response.status >= 400:
@@ -538,24 +500,14 @@ async def refresh_leaderboard():
 
             key = name.upper()
 
-            if (
-                key not in best_by_player
-                or points > int(best_by_player[key].get("score", 0))
-            ):
+            if key not in best_by_player or points > int(best_by_player[key].get("score", 0)):
                 best_by_player[key] = {
                     "player_name": name,
                     "score": points,
                     "created_at": item.get("created_at", "")
                 }
 
-        leaderboard = sorted(
-            best_by_player.values(),
-            key=lambda item: (
-                -int(item.get("score", 0)),
-                item.get("created_at", "")
-            )
-        )
-
+        leaderboard = sorted(best_by_player.values(), key=lambda item: (-int(item.get("score", 0)), item.get("created_at", "")))
         leaderboard_status = "OK"
         leaderboard_error = ""
 
@@ -611,40 +563,57 @@ def launch_refresh():
 # Power-up system
 # -----------------------------
 
-def spawn_power_item():
-    # 0 = GIANT PADDLE, 1 = MULTI BALL
-    item_type = pyxel.rndi(0, 1)
+POWER_EFFECTS = {
+    "giant": {"weight": 20, "label": "GIANT", "color": 12, "icon": "G"},
+    "multi_ball": {"weight": 18, "label": "MULTI", "color": 11, "icon": "M"},
+    "slow_time": {"weight": 20, "label": "SLOW", "color": 10, "icon": "S"},
+    "shield": {"weight": 14, "label": "SHIELD", "color": 9, "icon": "H"},
+    "score_boost": {"weight": 15, "label": "BOOST", "color": 13, "icon": "B"},
+}
 
+
+def pick_random_power_effect():
+    total = sum(data["weight"] for data in POWER_EFFECTS.values())
+    roll = pyxel.rndi(0, total - 1)
+    cutoff = 0
+
+    for key, data in POWER_EFFECTS.items():
+        cutoff += data["weight"]
+        if roll < cutoff:
+            return key
+
+    return "giant"
+
+
+def spawn_power_item():
+    effect = pick_random_power_effect()
     power_items.append({
         "x": float(pyxel.rndi(10, WIDTH - 10)),
         "y": float(CEILING_Y + 4),
-        "type": item_type,
-        "speed": pyxel.rndf(0.6, 1.0)
+        "type": effect,
+        "speed": pyxel.rndf(0.6, 1.0),
+        "color": POWER_EFFECTS[effect]["color"],
+        "icon": POWER_EFFECTS[effect]["icon"],
     })
 
 
 def activate_power_item(item_type):
-    global giant_timer, paddle_w, paddle_x
-    global power_message, power_message_timer
+    global giant_timer, paddle_w, paddle_x, power_message, power_message_timer
+    global slow_timer, shield_timer, score_boost_timer
 
-    if item_type == 0:
-        giant_timer = 60 * 10
+    if item_type == "giant":
+        giant_timer = 360
         paddle_w = GIANT_PADDLE_W
         paddle_x = max(0, min(WIDTH - paddle_w, paddle_x))
-
         power_message = "GIANT PADDLE!"
         make_particles(ball_x, ball_y, 24, 12)
 
-    else:
-        # 合計7個まで。メインボールを含めた上限。
+    elif item_type == "multi_ball":
         current_ball_count = 1 + len(extra_balls)
-        balls_to_add = max(
-            0, min(3, MAX_BALLS - current_ball_count)
-        )
+        balls_to_add = max(0, min(2, MAX_BALLS - current_ball_count))
 
         for _ in range(balls_to_add):
             angle = pyxel.rndf(-0.8, 0.8)
-
             extra_balls.append({
                 "x": ball_x,
                 "y": ball_y,
@@ -652,15 +621,25 @@ def activate_power_item(item_type):
                 "dy": -abs(math.cos(angle))
             })
 
-        power_message = (
-            "MULTI BALL!"
-            if balls_to_add > 0
-            else "BALL LIMIT!"
-        )
-
+        power_message = "MULTI BALL!" if balls_to_add > 0 else "BALL LIMIT!"
         make_particles(ball_x, ball_y, 30, 11)
 
-    power_message_timer = 100
+    elif item_type == "slow_time":
+        slow_timer = 420
+        power_message = "SLOW MOTION!"
+        make_particles(ball_x, ball_y, 18, 10)
+
+    elif item_type == "shield":
+        shield_timer = 480
+        power_message = "SHIELD UP!"
+        make_particles(ball_x, ball_y, 22, 9)
+
+    elif item_type == "score_boost":
+        score_boost_timer = 420
+        power_message = "SCORE BOOST!"
+        make_particles(ball_x, ball_y, 22, 13)
+
+    power_message_timer = 90
     pyxel.play(3, 9)
 
 
@@ -674,11 +653,7 @@ def update_power_items():
 
         spawn_timer -= 1
 
-        speed_factor = min(
-            1.0,
-            max(0.0, (ball_speed - 2.4) / (MAX_BALL_SPEED - 2.4))
-        )
-
+        speed_factor = min(1.0, max(0.0, (ball_speed - 2.4) / (MAX_BALL_SPEED - 2.4)))
         min_interval = int(300 - speed_factor * 210)
         max_interval = int(420 - speed_factor * 300)
 
@@ -697,10 +672,7 @@ def update_power_items():
         paddle_top = paddle_y
         paddle_bottom = paddle_y + 5
 
-        if (
-            paddle_left <= item["x"] <= paddle_right
-            and paddle_top <= item["y"] <= paddle_bottom
-        ):
+        if paddle_left <= item["x"] <= paddle_right and paddle_top <= item["y"] <= paddle_bottom:
             collected = True
 
         if collected:
@@ -716,14 +688,9 @@ def draw_power_items():
         y = int(item["y"])
         pulse = pyxel.frame_count // 5 % 2
 
-        if item["type"] == 0:
-            pyxel.circ(x, y, 5, 12)
-            pyxel.circ(x, y, 3, 1)
-            pyxel.text(x - 2, y - 3, "W", 7)
-        else:
-            pyxel.circ(x, y, 5, 11)
-            pyxel.circ(x, y, 3, 1)
-            pyxel.text(x - 3, y - 3, "3", 7)
+        pyxel.circ(x, y, 5, item["color"])
+        pyxel.circ(x, y, 3, 1)
+        pyxel.text(x - 2, y - 2, item["icon"], 7)
 
         if pulse:
             pyxel.pset(x, y - 6, 7)
@@ -795,6 +762,8 @@ def award_hit(x, y, is_extra=False):
     multi_factor = 1.5 if (is_extra or extra_balls) else 1.0
 
     points = int(2 * combo_factor * speed_factor * fever_factor * multi_factor)
+    if score_boost_timer > 0:
+        points = int(points * 1.5)
     score += points
 
     if score > high_score:
@@ -802,14 +771,8 @@ def award_hit(x, y, is_extra=False):
         new_record = True
         save_records()
 
-    combo_speed = min(
-        MAX_BALL_SPEED,
-        INITIAL_BALL_SPEED + combo * 0.12
-    )
-    ball_speed = min(
-        MAX_BALL_SPEED,
-        max(ball_speed, combo_speed)
-    )
+    combo_speed = min(MAX_BALL_SPEED, INITIAL_BALL_SPEED + combo * 0.12)
+    ball_speed = min(MAX_BALL_SPEED, max(ball_speed, combo_speed))
     max_speed = max(max_speed, ball_speed)
 
     flash_timer = 3
@@ -841,12 +804,18 @@ def lose_heart_and_continue():
     global flash_timer, shake_timer, power_message
     global power_message_timer, ball_attached
 
+    if shield_timer > 0:
+        shield_timer = 0
+        power_message = "SHIELD BLOCK!"
+        power_message_timer = 70
+        make_particles(ball_x, ball_y, 18, 9)
+        return
+
     hearts -= 1
     extra_balls.clear()
 
     flash_timer = 8
     shake_timer = 8
-
     save_records()
 
     if hearts <= 0:
@@ -864,13 +833,10 @@ def lose_heart_and_continue():
         submitted_this_round = False
 
     else:
-        # ball_speedはリセットしない
         combo = 0
         attach_ball_to_paddle()
-
         power_message = "LIFE LOST!"
         power_message_timer = 70
-
         change_music(0)
 
 
@@ -887,7 +853,7 @@ def reset():
     global screen_mode, submitted_this_round, new_record
     global power_items, spawn_timer, power_spawning_started
     global giant_timer, power_message_timer, power_message
-    global extra_balls, game_frames
+    global extra_balls, game_frames, slow_timer, shield_timer, score_boost_timer
 
     paddle_x = 55.0
     paddle_y = 100
@@ -913,6 +879,9 @@ def reset():
     flash_timer = 0
     shake_timer = 0
     fever_timer = 0
+    slow_timer = 0
+    shield_timer = 0
+    score_boost_timer = 0
 
     particles.clear()
     score_popups.clear()
@@ -977,28 +946,22 @@ def update():
     global initial_fetch_started, title_timer
     global giant_timer, power_message_timer, power_message
     global game_frames, max_speed, new_record
+    global slow_timer, shield_timer, score_boost_timer
 
     if not initial_fetch_started:
         initial_fetch_started = True
         launch_refresh()
 
-    # Title screen
     if screen_mode == "title":
         title_timer += 1
 
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-            if period_tab_clicked(
-                pyxel.mouse_x, pyxel.mouse_y, 39
-            ):
+            if period_tab_clicked(pyxel.mouse_x, pyxel.mouse_y, 39):
                 return
-
             if title_timer >= 120:
                 reset()
 
-        if title_timer >= 120 and (
-            pyxel.btnp(pyxel.KEY_SPACE)
-            or pyxel.btnp(pyxel.KEY_RETURN)
-        ):
+        if title_timer >= 120 and (pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.KEY_RETURN)):
             reset()
 
         return
@@ -1011,6 +974,15 @@ def update():
 
     if fever_timer > 0:
         fever_timer -= 1
+
+    if slow_timer > 0:
+        slow_timer -= 1
+
+    if shield_timer > 0:
+        shield_timer -= 1
+
+    if score_boost_timer > 0:
+        score_boost_timer -= 1
 
     if power_message_timer > 0:
         power_message_timer -= 1
@@ -1028,11 +1000,8 @@ def update():
         popup["y"] -= 0.35
         popup["timer"] -= 1
 
-    score_popups[:] = [
-        p for p in score_popups if p["timer"] > 0
-    ]
+    score_popups[:] = [p for p in score_popups if p["timer"] > 0]
 
-    # Game over screens
     if game_over:
         if screen_mode == "name":
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
@@ -1050,9 +1019,7 @@ def update():
 
         elif screen_mode == "leaderboard":
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-                if period_tab_clicked(
-                    pyxel.mouse_x, pyxel.mouse_y, 38
-                ):
+                if period_tab_clicked(pyxel.mouse_x, pyxel.mouse_y, 38):
                     return
                 reset()
 
@@ -1065,17 +1032,12 @@ def update():
 
         return
 
-    # Active power timer
     if giant_timer > 0:
         giant_timer -= 1
 
-    paddle_w = (
-        GIANT_PADDLE_W if giant_timer > 0 else BASE_PADDLE_W
-    )
-
+    paddle_w = GIANT_PADDLE_W if giant_timer > 0 else BASE_PADDLE_W
     paddle_x = max(0, min(WIDTH - paddle_w, paddle_x))
 
-    # Keyboard and mouse controls
     if pyxel.btn(pyxel.KEY_LEFT):
         paddle_x -= 3
 
@@ -1087,44 +1049,33 @@ def update():
 
     paddle_x = max(0, min(WIDTH - paddle_w, paddle_x))
 
-    # Attached ball after losing a life
     if ball_attached:
         ball_x = paddle_x + paddle_w / 2
         ball_y = paddle_y - 8
 
-        if (
-            pyxel.btnp(pyxel.KEY_SPACE)
-            or pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
-        ):
+        if pyxel.btnp(pyxel.KEY_SPACE) or pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             launch_attached_ball()
 
         return
 
     game_frames += 1
 
-    # Gradual time-based acceleration
-    # Does not reset after losing a life.
-    ball_speed = min(
-        MAX_BALL_SPEED,
-        ball_speed + TIME_ACCELERATION
-    )
+    ball_speed = min(MAX_BALL_SPEED, ball_speed + TIME_ACCELERATION)
 
-    combo_speed = min(
-        MAX_BALL_SPEED,
-        INITIAL_BALL_SPEED + combo * 0.12
-    )
+    combo_speed = min(MAX_BALL_SPEED, INITIAL_BALL_SPEED + combo * 0.12)
     ball_speed = max(ball_speed, combo_speed)
     max_speed = max(max_speed, ball_speed)
 
-    # Main ball movement
-    ball_x += ball_dx * ball_speed
-    ball_y += ball_dy * ball_speed
+    speed_factor = 0.85 if slow_timer > 0 else 1.0
+    movement_speed = ball_speed * speed_factor
+
+    ball_x += ball_dx * movement_speed
+    ball_y += ball_dy * movement_speed
 
     if ball_x <= BALL_MIN_X:
         ball_x = BALL_MIN_X
         ball_dx = abs(ball_dx)
         make_particles(ball_x, ball_y, 4, 7)
-
     elif ball_x >= BALL_MAX_X:
         ball_x = BALL_MAX_X
         ball_dx = -abs(ball_dx)
@@ -1135,12 +1086,7 @@ def update():
         ball_dy = abs(ball_dy)
         make_particles(ball_x, ball_y, 4, 7)
 
-    # Main ball / paddle collision
-    if (
-        ball_dy > 0
-        and paddle_x - 3 <= ball_x <= paddle_x + paddle_w + 3
-        and paddle_y - 4 <= ball_y <= paddle_y + 5
-    ):
+    if ball_dy > 0 and paddle_x - 3 <= ball_x <= paddle_x + paddle_w + 3 and paddle_y - 4 <= ball_y <= paddle_y + 5:
         ball_y = paddle_y - 4
 
         center = paddle_x + paddle_w / 2
@@ -1153,15 +1099,13 @@ def update():
 
         award_hit(ball_x, ball_y, False)
 
-    # Extra ball movement
     for ball in extra_balls[:]:
-        ball["x"] += ball["dx"] * ball_speed
-        ball["y"] += ball["dy"] * ball_speed
+        ball["x"] += ball["dx"] * movement_speed
+        ball["y"] += ball["dy"] * movement_speed
 
         if ball["x"] <= BALL_MIN_X:
             ball["x"] = BALL_MIN_X
             ball["dx"] = abs(ball["dx"])
-
         elif ball["x"] >= BALL_MAX_X:
             ball["x"] = BALL_MAX_X
             ball["dx"] = -abs(ball["dx"])
@@ -1170,11 +1114,7 @@ def update():
             ball["y"] = CEILING_Y + 4
             ball["dy"] = abs(ball["dy"])
 
-        if (
-            ball["dy"] > 0
-            and paddle_x - 3 <= ball["x"] <= paddle_x + paddle_w + 3
-            and paddle_y - 4 <= ball["y"] <= paddle_y + 5
-        ):
+        if ball["dy"] > 0 and paddle_x - 3 <= ball["x"] <= paddle_x + paddle_w + 3 and paddle_y - 4 <= ball["y"] <= paddle_y + 5:
             ball["y"] = paddle_y - 4
 
             center = paddle_x + paddle_w / 2
@@ -1192,14 +1132,12 @@ def update():
 
     update_power_items()
 
-    # If the main ball is lost, continue with an extra ball
     if ball_y > HEIGHT and extra_balls:
         replacement = extra_balls.pop(0)
         ball_x = replacement["x"]
         ball_y = replacement["y"]
         ball_dx = replacement["dx"]
         ball_dy = replacement["dy"]
-
     elif ball_y > HEIGHT and not extra_balls:
         lose_heart_and_continue()
 
@@ -1229,6 +1167,13 @@ def draw_game_hud():
     if combo >= 5:
         pyxel.text(111, 7, "x" + str(multiplier), 10)
 
+    if slow_timer > 0:
+        pyxel.text(130, 7, "SLOW", 10)
+    if shield_timer > 0:
+        pyxel.text(130, 7, "SHIELD", 9)
+    if score_boost_timer > 0:
+        pyxel.text(130, 7, "BOOST", 13)
+
 
 # -----------------------------
 # Draw
@@ -1239,20 +1184,12 @@ def draw():
         draw_title()
         return
 
-    # Background responds to speed and combo
     speed_phase = int(ball_speed * 2)
     combo_phase = combo // 3
 
-    interval = (
-        3 if combo >= 10
-        else 5 if combo >= 5
-        else max(4, 14 - int(ball_speed))
-    )
-
+    interval = 3 if combo >= 10 else 5 if combo >= 5 else max(4, 14 - int(ball_speed))
     phase = pyxel.frame_count // interval
-    bg = COLORS[
-        (phase + speed_phase + combo_phase) % len(COLORS)
-    ]
+    bg = COLORS[(phase + speed_phase + combo_phase) % len(COLORS)]
 
     if flash_timer > 0:
         bg = 7
@@ -1264,109 +1201,87 @@ def draw():
 
     for i in range(8):
         speed_factor = max(1, int(ball_speed))
-        x = (
-            i * 23
-            + pyxel.frame_count * (i % 3 + 1) * speed_factor
-        ) % WIDTH
-
+        x = (i * 23 + pyxel.frame_count * (i % 3 + 1) * speed_factor) % WIDTH
         color = COLORS[(i + phase + combo_phase) % len(COLORS)]
-
-        pyxel.line(
-            x + sx, CEILING_Y + sy,
-            x + sx, HEIGHT + sy,
-            color
-        )
+        pyxel.line(x + sx, CEILING_Y + sy, x + sx, HEIGHT + sy, color)
 
     for i in range(6):
-        y = CEILING_Y + (
-            i * 20 + pyxel.frame_count * max(1, int(ball_speed))
-        ) % (HEIGHT - CEILING_Y)
-
+        y = CEILING_Y + (i * 20 + pyxel.frame_count * max(1, int(ball_speed))) % (HEIGHT - CEILING_Y)
         color = COLORS[(i + phase + 2) % len(COLORS)]
-
         pyxel.circ(5 + sx, y + sy, 2, color)
-        pyxel.circ(
-            WIDTH - 6 + sx, HEIGHT - y + sy, 2, color
-        )
+        pyxel.circ(WIDTH - 6 + sx, HEIGHT - y + sy, 2, color)
 
     if combo >= 10:
         for i in range(10):
             x = i * 16
-            color = COLORS[(i + phase) % len(COLORS)]
-            pyxel.rect(x + sx, CEILING_Y + sy, 8, 3, color)
+            pyxel.rect(x + sx, CEILING_Y + sy, 8, 3, COLORS[(i + phase) % len(COLORS)])
 
     pyxel.line(0, CEILING_Y, WIDTH - 1, CEILING_Y, 7)
 
-    # Paddle
     paddle_color = 12 if giant_timer > 0 else 11
+    pyxel.rect(int(paddle_x + sx), int(paddle_y + sy), int(paddle_w), 5, paddle_color)
+    pyxel.rectb(int(paddle_x + sx - 1), int(paddle_y + sy - 1), int(paddle_w) + 2, 7, 7)
 
-    pyxel.rect(
-        int(paddle_x + sx), int(paddle_y + sy),
-        int(paddle_w), 5, paddle_color
-    )
-    pyxel.rectb(
-        int(paddle_x + sx - 1), int(paddle_y + sy - 1),
-        int(paddle_w) + 2, 7, 7
-    )
+    if shield_timer > 0:
+        pyxel.circ(int(paddle_x + paddle_w / 2 + sx), int(paddle_y + sy), 12, 9)
+        pyxel.circ(int(paddle_x + paddle_w / 2 + sx), int(paddle_y + sy), 9, 1)
 
-    # Main ball
     pyxel.circ(int(ball_x + sx), int(ball_y + sy), 4, 10)
     pyxel.pset(int(ball_x + sx), int(ball_y + sy), 7)
 
-    # Extra balls
     for ball in extra_balls:
-        pyxel.circ(
-            int(ball["x"] + sx), int(ball["y"] + sy), 4, 11
-        )
-        pyxel.pset(
-            int(ball["x"] + sx), int(ball["y"] + sy), 7
-        )
+        pyxel.circ(int(ball["x"] + sx), int(ball["y"] + sy), 4, 11)
+        pyxel.pset(int(ball["x"] + sx), int(ball["y"] + sy), 7)
 
     draw_power_items()
 
-    # Particles
     for particle in particles:
-        pyxel.pset(
-            int(particle[0]), int(particle[1]), particle[5]
-        )
+        pyxel.pset(int(particle[0]), int(particle[1]), particle[5])
 
-    # Floating score popups
     for popup in score_popups:
         color = popup["color"]
         if popup["timer"] < 12 and popup["timer"] // 2 % 2 == 0:
             color = 7
-
-        pyxel.text(
-            int(popup["x"]), int(popup["y"]),
-            popup["text"], color
-        )
+        pyxel.text(int(popup["x"]), int(popup["y"]), popup["text"], color)
 
     draw_game_hud()
 
-    # Attached ball instructions
     if ball_attached and not game_over:
         pyxel.text(43, 83, "SPACE / TAP", 7)
 
     if giant_timer > 0:
         seconds = (giant_timer + 59) // 60
         pyxel.text(5, 20, "GIANT:" + str(seconds) + "s", 12)
+    if slow_timer > 0:
+        seconds = (slow_timer + 59) // 60
+        pyxel.text(62, 20, "SLOW:" + str(seconds) + "s", 10)
+    if score_boost_timer > 0:
+        seconds = (score_boost_timer + 59) // 60
+        pyxel.text(103, 20, "BOOST:" + str(seconds) + "s", 13)
+    if shield_timer > 0:
+        seconds = (shield_timer + 59) // 60
+        pyxel.text(103, 20, "SHIELD:" + str(seconds) + "s", 9)
 
     if combo >= 10:
         color = 8 if pyxel.frame_count // 5 % 2 == 0 else 10
         pyxel.text(49, 55, "F E V E R !", color)
         pyxel.text(35, 65, "FEVER x3 SCORE!", 7)
 
-    # High-score animation
     if new_record and score > 0:
         color = 10 if pyxel.frame_count // 5 % 2 == 0 else 7
         pyxel.text(42, 36, "NEW HIGH SCORE!", color)
 
-    # Power-up notifications
     if power_message_timer > 0:
         if "GIANT" in power_message:
             color = 12
         elif "MULTI" in power_message or "BALL" in power_message:
             color = 11
+        elif "SLOW" in power_message:
+            color = 10
+        elif "SHIELD" in power_message:
+            color = 9
+        elif "BOOST" in power_message:
+            color = 13
         else:
             color = 10
 
@@ -1374,7 +1289,6 @@ def draw():
         pyxel.rectb(29, 78, 102, 13, color)
         pyxel.text(34, 82, power_message, color)
 
-    # Game over overlay
     if game_over:
         pyxel.rect(3, 28, 154, 90, 0)
         pyxel.rectb(3, 28, 154, 90, 10)
@@ -1384,11 +1298,7 @@ def draw():
             pyxel.text(7, 38, "SCORE:" + str(score), 7)
             pyxel.text(7, 45, "BEST:" + str(high_score), 10)
             pyxel.text(7, 52, "MAX COMBO:" + str(max_combo), 11)
-            pyxel.text(
-                7, 59,
-                "MAX SPEED:" + str(round(max_speed, 1)),
-                12
-            )
+            pyxel.text(7, 59, "MAX SPEED:" + str(round(max_speed, 1)), 12)
 
             pyxel.text(7, 66, "NAME:", 7)
             name_x, name_y, name_w, name_h = get_name_input_rect()
@@ -1423,21 +1333,17 @@ def draw():
 
             if leaderboard_status == "LOADING":
                 pyxel.text(43, 59, "LOADING...", 7)
-
             elif leaderboard_status == "ERROR":
                 pyxel.text(12, 59, "RANKING OFFLINE", 8)
                 pyxel.text(7, 68, "SCORE SAVED LOCALLY", 7)
                 pyxel.text(7, 77, str(leaderboard_error or "")[:25], 7)
-
             elif not leaderboard:
                 pyxel.text(29, 59, "NO SCORES YET", 7)
-
             else:
                 for i, item in enumerate(leaderboard[:7]):
                     y = 57 + i * 6
                     name = str(item.get("player_name", "PLAYER"))[:10]
                     points = str(item.get("score", 0))
-
                     pyxel.text(7, y, str(i + 1) + ".", 10)
                     pyxel.text(23, y, name, 7)
                     pyxel.text(112, y, points, 11)
@@ -1449,10 +1355,7 @@ def draw():
             elif submit_status == "SENDING":
                 pyxel.text(7, 98, "SENDING...", 11)
 
-            pyxel.text(
-                7, 104, str(submit_status or "")[:22],
-                6 if submit_status == "SAVED" else 8
-            )
+            pyxel.text(7, 104, str(submit_status or "")[:22], 6 if submit_status == "SAVED" else 8)
             pyxel.text(7, 112, "TAP / SPACE: RETRY", 10)
 
 
