@@ -1027,7 +1027,7 @@ def update():
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             mx = pyxel.mouse_x
             my = pyxel.mouse_y
-            if 112 <= mx <= 158 and 14 <= my <= 25:
+            if 50 <= mx <= 110 and 16 <= my <= 29:
                 score = 2_000_000
                 if score > high_score:
                     high_score = score
@@ -1230,10 +1230,10 @@ def draw_game_hud():
 
     pyxel.text(2, 7, "C:" + str(combo), 11)
 
-    # DEBUG button (browser click)
-    pyxel.rect(112, 14, 46, 11, 0)
-    pyxel.rectb(112, 14, 46, 11, 10)
-    pyxel.text(115, 17, "DEBUG+2M", 10)
+    # DEBUG button (browser click) - large, centered and easy to see
+    pyxel.rect(50, 16, 60, 14, 0)
+    pyxel.rectb(50, 16, 60, 14, 10)
+    pyxel.text(57, 20, "DEBUG +2M", 10)
 
     ball_count = 1 + len(extra_balls)
     pyxel.text(56, 7, "BALL:" + str(ball_count), 11)
