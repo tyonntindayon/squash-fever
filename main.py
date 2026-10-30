@@ -379,7 +379,7 @@ def draw_title():
 
     pyxel.line(12, 23, 148, 23, 10)
     pyxel.line(24, 25, 136, 25, 12)
-    pyxel.text(42, 29, TITLE_BYLINE, 6)
+    pyxel.text(42, 29, TITLE_BYLINE, 10)
 
     pyxel.rect(8, 35, 144, 61, 0)
     pyxel.rectb(8, 35, 144, 61, 12)
@@ -409,7 +409,7 @@ def draw_title():
     elif pyxel.frame_count // 20 % 2 == 0:
         pyxel.text(45, 100, "TAP TO START", 10)
 
-    pyxel.text(42, 107, "POWERED BY DOPAMINE", 7)
+    pyxel.text(42, 107, "POWERED BY DOPAMINE", 14)
     pyxel.text(38, 115, "BEST:" + str(high_score), 7)
 
 
