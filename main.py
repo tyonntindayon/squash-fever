@@ -128,9 +128,21 @@ def sync_name_input_overlay():
         name_input_element.maxLength = 12
         name_input_element.autocomplete = "off"
         name_input_element.autocapitalize = "characters"
+        name_input_element.autocorrect = "off"
         name_input_element.spellcheck = False
+        name_input_element.inputMode = "latin"
+        name_input_element.lang = "en"
         name_input_element.placeholder = "PLAYER NAME"
         name_input_element.setAttribute("aria-label", "Player name")
+        # Keep Pyxel's global key handler from swallowing text-field keystrokes.
+        name_input_element.addEventListener(
+            "keydown",
+            lambda event: event.stopPropagation()
+        )
+        name_input_element.addEventListener(
+            "keyup",
+            lambda event: event.stopPropagation()
+        )
         style = name_input_element.style
         style.position = "fixed"
         style.zIndex = "1001"
@@ -163,7 +175,12 @@ def sync_name_input_overlay():
         name_input_element.style.height = str(NAME_INPUT_H * scale) + "px"
         name_input_element.style.fontSize = str(max(16, 4 * scale)) + "px"
 
-    if document.activeElement != name_input_element:
+    try:
+        input_is_focused = bool(document.activeElement.isSameNode(name_input_element))
+    except Exception:
+        input_is_focused = False
+
+    if not input_is_focused:
         name_input_element.value = str(player_name or "")[:12]
     typed_name = str(name_input_element.value or "").strip().upper()[:12]
     if typed_name != str(player_name or ""):
