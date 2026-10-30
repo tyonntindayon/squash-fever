@@ -1022,8 +1022,13 @@ def update():
 
         return
 
-    # DEBUG: Press T during gameplay to set the score to 1,000,000.
-    if screen_mode == "game" and not game_over and pyxel.btnp(pyxel.KEY_T):
+    # DEBUG: Press T, F1, or 1 during gameplay to set the score to 2,000,000.
+    debug_pressed = (
+        pyxel.btnp(pyxel.KEY_T)
+        or pyxel.btnp(pyxel.KEY_F1)
+        or pyxel.btnp(pyxel.KEY_1)
+    )
+    if screen_mode == "game" and not game_over and debug_pressed:
         score = 2_000_000
         if score > high_score:
             high_score = score
