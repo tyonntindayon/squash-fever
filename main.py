@@ -98,109 +98,62 @@ save_data = {
     "last_score": 0
 }
 
-NAME_INPUT_X = 8
-NAME_INPUT_Y = 77
-NAME_INPUT_W = 144
-NAME_INPUT_H = 12
-SUBMIT_BUTTON = (38, 98, 84, 10)
-name_input_element = None
-name_input_event_proxies = []
-
-
-def stop_name_input_key_event(event):
-    event.stopPropagation()
-
-
-def focus_name_input(event):
-    if name_input_element is not None:
-        name_input_element.focus()
+NAME_DISPLAY_X = 8
+NAME_DISPLAY_Y = 76
+NAME_DISPLAY_W = 144
+NAME_DISPLAY_H = 7
+VIRTUAL_KEYS = [
+    (5, 84, "QWERTYUIOP"),
+    (12, 93, "ASDFGHJKL"),
+    (12, 102, ["Z", "X", "C", "V", "B", "N", "M", "DEL", "OK"]),
+]
+VIRTUAL_KEY_W = 14
+VIRTUAL_KEY_H = 8
+VIRTUAL_KEY_GAP = 1
 
 
 def get_name_input_rect():
-    return (NAME_INPUT_X, NAME_INPUT_Y, NAME_INPUT_W, NAME_INPUT_H)
+    return (NAME_DISPLAY_X, NAME_DISPLAY_Y, NAME_DISPLAY_W, NAME_DISPLAY_H)
 
 
-def get_submit_button_rect():
-    return SUBMIT_BUTTON
+def get_virtual_key_at(mx, my):
+    for row_index, row in enumerate(VIRTUAL_KEYS):
+        x, y, keys = row
+        if not (y <= my < y + VIRTUAL_KEY_H):
+            continue
+        if isinstance(keys, str):
+            keys = list(keys)
+        for index, key in enumerate(keys):
+            key_x = x + index * (VIRTUAL_KEY_W + VIRTUAL_KEY_GAP)
+            if key_x <= mx < key_x + VIRTUAL_KEY_W:
+                return key
+    return None
 
 
-def sync_name_input_overlay():
-    global name_input_element, player_name, name_input_event_proxies
+def draw_virtual_keyboard():
+    for row in VIRTUAL_KEYS:
+        x, y, keys = row
+        if isinstance(keys, str):
+            keys = list(keys)
+        for index, key in enumerate(keys):
+            key_x = x + index * (VIRTUAL_KEY_W + VIRTUAL_KEY_GAP)
+            color = 8 if key == "OK" else 5 if key == "DEL" else 1
+            border = 10 if key == "OK" else 7
+            pyxel.rect(key_x, y, VIRTUAL_KEY_W, VIRTUAL_KEY_H, color)
+            pyxel.rectb(key_x, y, VIRTUAL_KEY_W, VIRTUAL_KEY_H, border)
+            label = "<" if key == "DEL" else key
+            text_width = len(label) * 4
+            pyxel.text(key_x + (VIRTUAL_KEY_W - text_width) // 2, y + 1, label, 7)
 
-    try:
-        from js import document
-        from pyodide.ffi import create_proxy
-    except Exception:
-        return
 
-    if name_input_element is None:
-        name_input_element = document.createElement("input")
-        name_input_element.type = "text"
-        name_input_element.maxLength = 12
-        name_input_element.autocomplete = "off"
-        name_input_element.autocapitalize = "characters"
-        name_input_element.autocorrect = "off"
-        name_input_element.spellcheck = False
-        name_input_element.inputMode = "latin"
-        name_input_element.lang = "en"
-        name_input_element.placeholder = "PLAYER NAME"
-        name_input_element.setAttribute("aria-label", "Player name")
-
-        # Keep Pyxel's keyboard handler from receiving events from the text field.
-        key_proxy = create_proxy(stop_name_input_key_event)
-        pointer_proxy = create_proxy(focus_name_input)
-        name_input_event_proxies.extend([key_proxy, pointer_proxy])
-        name_input_element.addEventListener("keydown", key_proxy)
-        name_input_element.addEventListener("keyup", key_proxy)
-        name_input_element.addEventListener("pointerdown", pointer_proxy)
-
-        style = name_input_element.style
-        style.position = "fixed"
-        style.zIndex = "2147483647"
-        style.pointerEvents = "auto"
-        style.margin = "0"
-        style.padding = "0 8px"
-        style.boxSizing = "border-box"
-        style.background = "#111126"
-        style.color = "#ffffff"
-        style.border = "2px solid #ffd83d"
-        style.borderRadius = "3px"
-        style.fontFamily = "monospace"
-        style.fontWeight = "bold"
-        style.letterSpacing = "1px"
-        style.outline = "none"
-        style.display = "none"
-        document.body.appendChild(name_input_element)
-
-    visible = bool(game_over and screen_mode == "name")
-    name_input_element.style.display = "block" if visible else "none"
-    if not visible:
-        return
-
-    # Pyxel's canvas ID differs between builds, so locate the actual game canvas.
-    canvas = document.querySelector("pyxel-run canvas")
-    if canvas is None:
-        canvas = document.getElementById("canvas")
-
-    if canvas is not None:
-        rect = canvas.getBoundingClientRect()
-        scale = rect.width / WIDTH
-        name_input_element.style.left = str(rect.left + NAME_INPUT_X * scale) + "px"
-        name_input_element.style.top = str(rect.top + NAME_INPUT_Y * scale) + "px"
-        name_input_element.style.width = str(NAME_INPUT_W * scale) + "px"
-        name_input_element.style.height = str(NAME_INPUT_H * scale) + "px"
-        name_input_element.style.fontSize = str(max(16, 4 * scale)) + "px"
-
-    try:
-        input_is_focused = bool(document.activeElement.isSameNode(name_input_element))
-    except Exception:
-        input_is_focused = False
-
-    if not input_is_focused:
-        name_input_element.value = str(player_name or "")[:12]
-    typed_name = str(name_input_element.value or "").strip().upper()[:12]
-    if typed_name != str(player_name or ""):
-        player_name = typed_name
+def handle_virtual_key(key):
+    global player_name
+    if key == "DEL":
+        player_name = str(player_name or "")[:-1]
+    elif key == "OK":
+        submit_current_name()
+    elif key and len(str(player_name or "")) < 12:
+        player_name = (str(player_name or "") + key).upper()
 
 
 def submit_current_name():
@@ -1124,9 +1077,8 @@ def update():
     if game_over:
         if screen_mode == "name":
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-                submit_x, submit_y, submit_w, submit_h = get_submit_button_rect()
-                if submit_x <= pyxel.mouse_x < submit_x + submit_w and submit_y <= pyxel.mouse_y < submit_y + submit_h:
-                    submit_current_name()
+                key = get_virtual_key_at(pyxel.mouse_x, pyxel.mouse_y)
+                handle_virtual_key(key)
 
             if pyxel.btnp(pyxel.KEY_BACKSPACE):
                 player_name = str(player_name or "")[:-1]
@@ -1431,12 +1383,9 @@ def draw():
             name_x, name_y, name_w, name_h = get_name_input_rect()
             pyxel.rect(name_x, name_y, name_w, name_h, 1)
             pyxel.rectb(name_x, name_y, name_w, name_h, 10)
-            pyxel.text(12, 92, "TYPE IN THE FIELD ABOVE", 7)
-
-            submit_x, submit_y, submit_w, submit_h = get_submit_button_rect()
-            pyxel.rect(submit_x, submit_y, submit_w, submit_h, 3)
-            pyxel.rectb(submit_x, submit_y, submit_w, submit_h, 7)
-            pyxel.text(submit_x + 25, submit_y + 2, "SUBMIT", 7)
+            shown_name = str(player_name or "")[:12]
+            pyxel.text(12, 77, shown_name if shown_name else "TAP KEYS BELOW", 10 if shown_name else 6)
+            draw_virtual_keyboard()
 
         elif screen_mode == "leaderboard":
             draw_logo("DOPABALL", 43, 29, 1, 8)
