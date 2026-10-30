@@ -104,6 +104,16 @@ NAME_INPUT_W = 144
 NAME_INPUT_H = 12
 SUBMIT_BUTTON = (38, 98, 84, 10)
 name_input_element = None
+name_input_event_proxies = []
+
+
+def stop_name_input_key_event(event):
+    event.stopPropagation()
+
+
+def focus_name_input(event):
+    if name_input_element is not None:
+        name_input_element.focus()
 
 
 def get_name_input_rect():
@@ -115,10 +125,11 @@ def get_submit_button_rect():
 
 
 def sync_name_input_overlay():
-    global name_input_element, player_name
+    global name_input_element, player_name, name_input_event_proxies
 
     try:
         from js import document
+        from pyodide.ffi import create_proxy
     except Exception:
         return
 
@@ -134,18 +145,19 @@ def sync_name_input_overlay():
         name_input_element.lang = "en"
         name_input_element.placeholder = "PLAYER NAME"
         name_input_element.setAttribute("aria-label", "Player name")
-        # Keep Pyxel's global key handler from swallowing text-field keystrokes.
-        name_input_element.addEventListener(
-            "keydown",
-            lambda event: event.stopPropagation()
-        )
-        name_input_element.addEventListener(
-            "keyup",
-            lambda event: event.stopPropagation()
-        )
+
+        # Keep Pyxel's keyboard handler from receiving events from the text field.
+        key_proxy = create_proxy(stop_name_input_key_event)
+        pointer_proxy = create_proxy(focus_name_input)
+        name_input_event_proxies.extend([key_proxy, pointer_proxy])
+        name_input_element.addEventListener("keydown", key_proxy)
+        name_input_element.addEventListener("keyup", key_proxy)
+        name_input_element.addEventListener("pointerdown", pointer_proxy)
+
         style = name_input_element.style
         style.position = "fixed"
-        style.zIndex = "1001"
+        style.zIndex = "2147483647"
+        style.pointerEvents = "auto"
         style.margin = "0"
         style.padding = "0 8px"
         style.boxSizing = "border-box"
@@ -165,7 +177,11 @@ def sync_name_input_overlay():
     if not visible:
         return
 
-    canvas = document.getElementById("canvas")
+    # Pyxel's canvas ID differs between builds, so locate the actual game canvas.
+    canvas = document.querySelector("pyxel-run canvas")
+    if canvas is None:
+        canvas = document.getElementById("canvas")
+
     if canvas is not None:
         rect = canvas.getBoundingClientRect()
         scale = rect.width / WIDTH
