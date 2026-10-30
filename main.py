@@ -28,7 +28,7 @@ SUPABASE_KEY = "sb_publishable_sae6J_mLG2NpvPFf2MI-kQ_ozswuMhR"
 TABLE_URL = SUPABASE_URL + "/rest/v1/squash_scores"
 
 GAME_TITLE = "DOPABALL | DOPAMINE SUPPLY"
-TITLE_BYLINE = "A DOPAMINE SUPPLY ORIGINAL"
+TITLE_BYLINE = "DEVELOPED BY TGAMES"
 SAVE_FILE = "dopaball_save.json"
 
 pyxel.init(WIDTH, HEIGHT, title=GAME_TITLE)
@@ -410,7 +410,7 @@ def draw_title():
     elif pyxel.frame_count // 20 % 2 == 0:
         pyxel.text(45, 100, "TAP TO START", 10)
 
-    pyxel.text(25, 109, "A Tgames Original", 6)
+    pyxel.text(34, 109, "DEVELOPED BY TGAMES", 6)
     pyxel.text(38, 115, "BEST:" + str(high_score), 7)
 
 
