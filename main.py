@@ -947,6 +947,7 @@ def reset():
     global power_items, spawn_timer, power_spawning_started
     global giant_timer, power_message_timer, power_message
     global extra_balls, game_frames, slow_timer, shield_timer, score_boost_timer
+    global dev_modified, dev_rankable_score
 
     paddle_x = 55.0
     paddle_y = 100
@@ -962,6 +963,8 @@ def reset():
     extra_balls.clear()
 
     score = 0
+    dev_modified = False
+    dev_rankable_score = False
     combo = 0
     max_combo = 0
     game_frames = 0
