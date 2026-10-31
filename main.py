@@ -463,64 +463,68 @@ def get_period_bounds(period):
 # -----------------------------
 
 def draw_title():
-    pyxel.cls(1)
+    # NEON ARCADE title screen: black, neon yellow and restrained grey.
+    pyxel.cls(0)
 
-    for i in range(9):
-        x = (i * 21 + pyxel.frame_count) % WIDTH
-        color = 5 if i % 2 == 0 else 8
-        pyxel.line(x, 0, x - 25, HEIGHT, color)
+    # Subtle animated scan lines and side accents.
+    for y in range(0, HEIGHT, 12):
+        pyxel.line(0, y, WIDTH - 1, y, 1)
+    pulse = 10 if pyxel.frame_count // 18 % 2 == 0 else 9
+    pyxel.line(5, 0, 5, HEIGHT, 5)
+    pyxel.line(154, 0, 154, HEIGHT, 5)
+    for i in range(6):
+        x = (i * 31 + pyxel.frame_count // 2) % WIDTH
+        pyxel.pset(x, 32 + (i % 3) * 18, 5)
 
-    for i in range(5):
-        x = (i * 37 + pyxel.frame_count // 2) % WIDTH
-        y = 18 + (i % 3) * 30
-        pyxel.circ(x, y, 2, 12)
-
+    # Main logo.
     logo = "DOPABALL"
     scale = 3
     logo_width = len(logo) * 5 * scale - scale
     start_x = (WIDTH - logo_width) // 2
-    logo_color = 10 if pyxel.frame_count // 12 % 2 == 0 else 11
+    draw_logo(logo, start_x + 1, 5, scale, 5)
+    draw_logo(logo, start_x, 4, scale, pulse)
 
-    draw_logo(logo, start_x + 2, 6, scale, 8)
-    draw_logo(logo, start_x, 4, scale, logo_color)
+    pyxel.line(10, 23, 150, 23, 10)
+    pyxel.text(43, 27, "DEVELOPED BY TGAMES", 7)
 
-    pyxel.line(12, 23, 148, 23, 10)
-    pyxel.line(24, 25, 136, 25, 12)
-    pyxel.text(42, 29, TITLE_BYLINE, 10)
-
-    pyxel.rect(8, 35, 144, 61, 0)
-    pyxel.rectb(8, 35, 144, 61, 12)
-
-    draw_period_tabs(39)
-    pyxel.text(44, 50, "TOP 5 SCORES", 10)
+    # Ranking panel.
+    pyxel.rect(7, 36, 146, 59, 1)
+    pyxel.rectb(7, 36, 146, 59, 10)
+    pyxel.rect(9, 38, 142, 1, 5)
+    draw_period_tabs(40)
+    pyxel.text(49, 52, "TOP 5 SCORES", 10)
 
     if leaderboard_status == "LOADING":
-        pyxel.text(49, 64, "LOADING...", 7)
+        pyxel.text(49, 67, "LOADING...", 7)
     elif leaderboard_status == "ERROR":
-        pyxel.text(22, 64, "RANKING OFFLINE", 8)
-        pyxel.text(5, 75, leaderboard_error[:37], 6)
+        pyxel.text(22, 67, "RANKING OFFLINE", 8)
+        pyxel.text(8, 78, leaderboard_error[:36], 6)
     elif not leaderboard:
-        pyxel.text(28, 66, "NO SCORES YET", 7)
+        pyxel.text(31, 68, "NO SCORES YET", 7)
     else:
         for i, item in enumerate(leaderboard[:5]):
-            y = 59 + i * 7
+            y = 61 + i * 6
             name = str(item.get("player_name", "PLAYER"))[:10]
             points = str(item.get("score", 0))
-
             pyxel.text(14, y, str(i + 1) + ".", 10 if i == 0 else 7)
             pyxel.text(29, y, name, 7)
             pyxel.text(112, y, points, 10 if i == 0 else 11)
 
+    # Start prompt and footer controls.
+    pyxel.rect(34, 98, 92, 12, 10)
+    pyxel.rectb(34, 98, 92, 12, 7)
     if title_timer < 120:
-        pyxel.text(54, 100, "GET READY...", 7)
+        pyxel.text(61, 101, "GET READY", 0)
     elif pyxel.frame_count // 20 % 2 == 0:
-        pyxel.text(45, 100, "TAP TO START", 10)
+        pyxel.text(57, 101, "TAP TO START", 0)
+    else:
+        pyxel.text(57, 101, "TAP TO START", 1)
 
-    pyxel.text(20, 109, "POWERED BY DOPAMINE", 14)
-    pyxel.text(20, 116, "BEST:" + str(high_score), 7)
-    pyxel.rect(112, 107, 40, 10, 5)
-    pyxel.rectb(112, 107, 40, 10, 10)
-    pyxel.text(117, 109, "LEGEND", 10)
+    pyxel.text(8, 113, "BEST:" + str(high_score), 10)
+    pyxel.text(75, 115, "TGAMES", 5)
+    pyxel.rect(112, 108, 40, 10, 1)
+    pyxel.rectb(112, 108, 40, 10, 10)
+    pyxel.text(117, 110, "LEGEND", 10)
 
 
 # -----------------------------
