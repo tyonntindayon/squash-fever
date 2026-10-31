@@ -1017,9 +1017,9 @@ def update_dev_menu():
         return
 
     if pyxel.btnp(pyxel.KEY_UP):
-        dev_menu_selected = (dev_menu_selected - 1) % 4
+        dev_menu_selected = (dev_menu_selected - 1) % 5
     elif pyxel.btnp(pyxel.KEY_DOWN):
-        dev_menu_selected = (dev_menu_selected + 1) % 4
+        dev_menu_selected = (dev_menu_selected + 1) % 5
 
     change = 0
     if pyxel.btnp(pyxel.KEY_LEFT):
@@ -1037,14 +1037,16 @@ def update_dev_menu():
             hearts = max(1, min(MAX_HEARTS, hearts + change))
         elif dev_menu_selected == 3:
             combo = max(0, combo + change)
+        elif dev_menu_selected == 4:
+            score = 2401687
 
 
 def draw_dev_menu():
     if not dev_menu_open:
         return
 
-    pyxel.rect(15, 17, 130, 88, 0)
-    pyxel.rectb(15, 17, 130, 88, 10)
+    pyxel.rect(15, 12, 130, 106, 0)
+    pyxel.rectb(15, 12, 130, 106, 10)
     pyxel.text(25, 23, "DEVELOPER MENU", 10)
     pyxel.text(25, 34, "UP/DOWN: SELECT", 7)
     pyxel.text(25, 42, "LEFT/RIGHT: CHANGE", 7)
@@ -1054,17 +1056,18 @@ def draw_dev_menu():
         ("BALL SPEED", str(round(ball_speed, 1))),
         ("HEARTS", str(hearts)),
         ("COMBO", str(combo)),
+        ("SCORE 2401687", "SET"),
     ]
     for i, (label, value) in enumerate(items):
-        y = 54 + i * 9
+        y = 51 + i * 8
         color = 10 if i == dev_menu_selected else 7
         prefix = ">" if i == dev_menu_selected else " "
         pyxel.text(25, y, prefix + label, color)
         pyxel.text(112, y, value, color)
 
-    pyxel.text(25, 91, "CTRL+SHIFT+D: CLOSE", 8)
+    pyxel.text(25, 98, "CTRL+SHIFT+D: CLOSE", 8)
     if dev_modified:
-        pyxel.text(25, 98, "TEST MODE - NO RANKING", 8)
+        pyxel.text(25, 106, "TEST MODE - NO RANKING", 8)
 
 
 # -----------------------------
