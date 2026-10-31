@@ -1542,8 +1542,8 @@ def draw():
             draw_virtual_keyboard()
 
         elif screen_mode == "leaderboard":
-            # NEON ARCADE results screen, with the logo neatly inside its own frame.
-            pyxel.rectb(8, 7, 144, 21, 10)
+            # Black backing keeps the logo clear without adding a frame.
+            pyxel.rect(58, 11, 44, 11, 0)
             draw_logo("DOPABALL", 61, 14, 1, 5)
             draw_logo("DOPABALL", 60, 13, 1, 10)
 
