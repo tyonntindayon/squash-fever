@@ -1240,7 +1240,7 @@ def update():
 
         elif screen_mode == "leaderboard":
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-                if period_tab_clicked(pyxel.mouse_x, pyxel.mouse_y, 38):
+                if period_tab_clicked(pyxel.mouse_x, pyxel.mouse_y, 45):
                     return
                 reset()
 
@@ -1542,35 +1542,35 @@ def draw():
             draw_virtual_keyboard()
 
         elif screen_mode == "leaderboard":
-            # NEON ARCADE results screen.
-            draw_logo("DOPABALL", 43, 23, 1, 5)
-            draw_logo("DOPABALL", 42, 22, 1, 10)
-            pyxel.line(8, 31, 152, 31, 10)
+            # NEON ARCADE results screen, with working period tabs and all 7 rows.
+            draw_logo("DOPABALL", 43, 18, 1, 5)
+            draw_logo("DOPABALL", 42, 17, 1, 10)
+            pyxel.line(8, 26, 152, 26, 10)
 
             # Personal result strip.
-            pyxel.rect(8, 34, 144, 17, 1)
-            pyxel.rectb(8, 34, 144, 17, 10)
-            pyxel.text(14, 38, "YOUR SCORE", 7)
-            pyxel.text(14, 44, str(score)[:10], 10)
-            pyxel.text(91, 38, "BEST", 7)
-            pyxel.text(91, 44, str(high_score)[:10], 10)
+            pyxel.rect(8, 28, 144, 15, 1)
+            pyxel.rectb(8, 28, 144, 15, 10)
+            pyxel.text(14, 31, "YOUR SCORE", 7)
+            pyxel.text(14, 37, str(score)[:10], 10)
+            pyxel.text(91, 31, "BEST", 7)
+            pyxel.text(91, 37, str(high_score)[:10], 10)
 
-            draw_period_tabs(54)
-            pyxel.text(48, 66, "TOP 7 PLAYERS", 10)
-            pyxel.line(8, 74, 152, 74, 5)
+            draw_period_tabs(45)
+            pyxel.text(48, 57, "TOP 7 PLAYERS", 10)
+            pyxel.line(8, 64, 152, 64, 5)
 
             if leaderboard_status == "LOADING":
-                pyxel.text(48, 82, "LOADING...", 7)
+                pyxel.text(48, 79, "LOADING...", 7)
             elif leaderboard_status == "ERROR":
-                pyxel.text(17, 81, "RANKING OFFLINE", 8)
-                pyxel.text(8, 90, "SCORE SAVED LOCALLY", 7)
+                pyxel.text(17, 78, "RANKING OFFLINE", 8)
+                pyxel.text(8, 86, "SCORE SAVED LOCALLY", 7)
                 error_text = str(leaderboard_error or "")
-                pyxel.text(8, 98, error_text[:36], 6)
+                pyxel.text(8, 94, error_text[:36], 6)
             elif not leaderboard:
-                pyxel.text(31, 84, "NO SCORES YET", 7)
+                pyxel.text(31, 79, "NO SCORES YET", 7)
             else:
-                for i, item in enumerate(leaderboard[:4]):
-                    y = 78 + i * 6
+                for i, item in enumerate(leaderboard[:7]):
+                    y = 66 + i * 5
                     name = str(item.get("player_name", "PLAYER"))[:10]
                     points = str(item.get("score", 0))
                     if i == 0:
