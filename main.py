@@ -1570,15 +1570,15 @@ def draw():
                 draw_ui_text("NO SCORES YET", 39, 78, 7)
             else:
                 for i, item in enumerate(leaderboard[:7]):
-                    # Keep a small gap between rows while fitting the 120px screen.
-                    y = 66 + i * 7
+                    # Match the title-screen ranking font and row spacing.
+                    y = 66 + i * 6
                     name = str(item.get("player_name", "PLAYER"))[:10]
                     points = str(item.get("score", 0))
                     if i == 0:
-                        pyxel.rect(8, y - 1, 144, 8, 1)
-                    draw_ui_text(str(i + 1) + ".", 11, y, 10 if i == 0 else 7)
-                    draw_ui_text(name, 28, y, 7)
-                    draw_ui_text(points, 112, y, 10 if i == 0 else 11)
+                        pyxel.rect(8, y - 1, 144, 7, 1)
+                    pyxel.text(14, y, str(i + 1) + ".", 10 if i == 0 else 7)
+                    pyxel.text(29, y, name, 7)
+                    pyxel.text(112, y, points, 10 if i == 0 else 11)
 
             # Retry prompt only; no ranking-status or TGAMES footer text.
             pyxel.text(87, 114, "SPACE: RETRY", 10)
