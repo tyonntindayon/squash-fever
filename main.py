@@ -1556,39 +1556,31 @@ def draw():
             pyxel.text(91, 37, str(high_score)[:10], 10)
 
             draw_period_tabs(45)
-            pyxel.text(48, 57, "TOP 7 PLAYERS", 10)
+            draw_ui_text("TOP 7 PLAYERS", 42, 55, 10)
             pyxel.line(8, 64, 152, 64, 5)
 
             if leaderboard_status == "LOADING":
-                pyxel.text(48, 79, "LOADING...", 7)
+                draw_ui_text("LOADING...", 48, 78, 7)
             elif leaderboard_status == "ERROR":
-                pyxel.text(17, 78, "RANKING OFFLINE", 8)
-                pyxel.text(8, 86, "SCORE SAVED LOCALLY", 7)
+                draw_ui_text("RANKING OFFLINE", 24, 78, 8)
+                pyxel.text(8, 89, "SCORE SAVED LOCALLY", 7)
                 error_text = str(leaderboard_error or "")
-                pyxel.text(8, 94, error_text[:36], 6)
+                pyxel.text(8, 97, error_text[:36], 6)
             elif not leaderboard:
-                pyxel.text(31, 79, "NO SCORES YET", 7)
+                draw_ui_text("NO SCORES YET", 39, 78, 7)
             else:
                 for i, item in enumerate(leaderboard[:7]):
-                    y = 66 + i * 5
+                    y = 66 + i * 7
                     name = str(item.get("player_name", "PLAYER"))[:10]
                     points = str(item.get("score", 0))
                     if i == 0:
-                        pyxel.rect(8, y - 1, 144, 6, 1)
-                    pyxel.text(12, y, str(i + 1) + ".", 10 if i == 0 else 7)
-                    pyxel.text(28, y, name, 7)
-                    pyxel.text(112, y, points, 10 if i == 0 else 11)
+                        pyxel.rect(8, y - 1, 144, 8, 1)
+                    draw_ui_text(str(i + 1) + ".", 11, y, 10 if i == 0 else 7)
+                    draw_ui_text(name, 28, y, 7)
+                    draw_ui_text(points, 112, y, 10 if i == 0 else 11)
 
-            # Submission status and replay prompt.
-            if submit_status == "LOCAL SAVE":
-                pyxel.text(8, 105, "LOCAL SAVE", 8)
-            elif submit_status == "SAVED":
-                pyxel.text(8, 105, "RANKED", 10)
-            elif submit_status == "SENDING":
-                pyxel.text(8, 105, "SENDING...", 11)
-
-            pyxel.text(87, 105, "SPACE: RETRY", 10)
-            pyxel.text(8, 114, "POWERED BY TGAMES", 5)
+            # Retry prompt only; no ranking-status or TGAMES footer text.
+            pyxel.text(87, 113, "SPACE: RETRY", 10)
 
 
 pyxel.run(update, draw)
