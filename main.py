@@ -88,6 +88,7 @@ title_timer = 0
 dev_menu_open = False
 dev_menu_selected = 0
 dev_modified = False
+dev_rankable_score = False
 selected_period = "DAILY"
 
 fetch_task_running = False
@@ -162,8 +163,9 @@ def handle_virtual_key(key):
 
 def submit_current_name():
     global screen_mode, submitted_this_round, submit_status
+    global dev_rankable_score
 
-    if dev_modified:
+    if dev_modified and not dev_rankable_score:
         screen_mode = "leaderboard"
         submit_status = "DEV TEST - NOT RANKED"
         submitted_this_round = True
@@ -1005,7 +1007,7 @@ def sync_name_input_overlay():
 # -----------------------------
 
 def update_dev_menu():
-    global dev_menu_open, dev_menu_selected, dev_modified
+    global dev_menu_open, dev_menu_selected, dev_modified, dev_rankable_score
     global score, ball_speed, hearts, combo
 
     # CTRL + SHIFT + D で開閉
@@ -1029,6 +1031,8 @@ def update_dev_menu():
 
     if change:
         dev_modified = True
+        if dev_menu_selected != 4:
+            dev_rankable_score = False
         if dev_menu_selected == 0:
             score = max(0, score + change * 1000)
         elif dev_menu_selected == 1:
@@ -1039,6 +1043,7 @@ def update_dev_menu():
             combo = max(0, combo + change)
         elif dev_menu_selected == 4:
             score = 2401687
+            dev_rankable_score = True
 
 
 def draw_dev_menu():
@@ -1067,7 +1072,7 @@ def draw_dev_menu():
 
     pyxel.text(25, 98, "CTRL+SHIFT+D: CLOSE", 8)
     if dev_modified:
-        pyxel.text(25, 106, "TEST MODE - NO RANKING", 8)
+        pyxel.text(25, 106, "PRESET SCORE CAN RANK" if dev_rankable_score else "TEST MODE - NO RANKING", 8)
 
 
 # -----------------------------
