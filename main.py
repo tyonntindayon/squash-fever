@@ -534,7 +534,8 @@ async def get_json(url):
         url,
         method="GET",
         headers={
-            "apikey": SUPABASE_KEY
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY
         }
     )
 
@@ -557,6 +558,7 @@ async def send_score(name, points):
         method="POST",
         headers={
             "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY,
             "Content-Type": "application/json",
             "Prefer": "return=minimal"
         },
