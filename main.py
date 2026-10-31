@@ -84,6 +84,10 @@ submit_status = ""
 
 screen_mode = "title"
 title_timer = 0
+
+dev_menu_open = False
+dev_menu_selected = 0
+dev_modified = False
 selected_period = "DAILY"
 
 fetch_task_running = False
@@ -158,6 +162,12 @@ def handle_virtual_key(key):
 
 def submit_current_name():
     global screen_mode, submitted_this_round, submit_status
+
+    if dev_modified:
+        screen_mode = "leaderboard"
+        submit_status = "DEV TEST - NOT RANKED"
+        submitted_this_round = True
+        return False
 
     name = str(player_name or "").strip()[:12]
     if not name or submitted_this_round or submit_task_running:
@@ -991,6 +1001,73 @@ def sync_name_input_overlay():
 
 
 # -----------------------------
+# Developer menu
+# -----------------------------
+
+def update_dev_menu():
+    global dev_menu_open, dev_menu_selected, dev_modified
+    global score, ball_speed, hearts, combo
+
+    # CTRL + SHIFT + D で開閉
+    if pyxel.btnp(pyxel.KEY_D) and pyxel.btn(pyxel.KEY_CTRL) and pyxel.btn(pyxel.KEY_SHIFT):
+        dev_menu_open = not dev_menu_open
+        return
+
+    if not dev_menu_open:
+        return
+
+    if pyxel.btnp(pyxel.KEY_UP):
+        dev_menu_selected = (dev_menu_selected - 1) % 4
+    elif pyxel.btnp(pyxel.KEY_DOWN):
+        dev_menu_selected = (dev_menu_selected + 1) % 4
+
+    change = 0
+    if pyxel.btnp(pyxel.KEY_LEFT):
+        change = -1
+    elif pyxel.btnp(pyxel.KEY_RIGHT):
+        change = 1
+
+    if change:
+        dev_modified = True
+        if dev_menu_selected == 0:
+            score = max(0, score + change * 1000)
+        elif dev_menu_selected == 1:
+            ball_speed = max(0.5, min(MAX_BALL_SPEED, ball_speed + change * 0.5))
+        elif dev_menu_selected == 2:
+            hearts = max(1, min(MAX_HEARTS, hearts + change))
+        elif dev_menu_selected == 3:
+            combo = max(0, combo + change)
+
+
+def draw_dev_menu():
+    if not dev_menu_open:
+        return
+
+    pyxel.rect(15, 17, 130, 88, 0)
+    pyxel.rectb(15, 17, 130, 88, 10)
+    pyxel.text(25, 23, "DEVELOPER MENU", 10)
+    pyxel.text(25, 34, "UP/DOWN: SELECT", 7)
+    pyxel.text(25, 42, "LEFT/RIGHT: CHANGE", 7)
+
+    items = [
+        ("SCORE", str(score)),
+        ("BALL SPEED", str(round(ball_speed, 1))),
+        ("HEARTS", str(hearts)),
+        ("COMBO", str(combo)),
+    ]
+    for i, (label, value) in enumerate(items):
+        y = 54 + i * 9
+        color = 10 if i == dev_menu_selected else 7
+        prefix = ">" if i == dev_menu_selected else " "
+        pyxel.text(25, y, prefix + label, color)
+        pyxel.text(112, y, value, color)
+
+    pyxel.text(25, 91, "CTRL+SHIFT+D: CLOSE", 8)
+    if dev_modified:
+        pyxel.text(25, 98, "TEST MODE - NO RANKING", 8)
+
+
+# -----------------------------
 # Update
 # -----------------------------
 
@@ -1007,6 +1084,11 @@ def update():
     if not initial_fetch_started:
         initial_fetch_started = True
         launch_refresh()
+
+    if screen_mode == "game" and not game_over:
+        update_dev_menu()
+        if dev_menu_open:
+            return
 
     if screen_mode == "title":
         title_timer += 1
@@ -1306,6 +1388,8 @@ def draw():
 
     if ball_attached and not game_over:
         pyxel.text(43, 83, "SPACE / TAP", 7)
+
+    draw_dev_menu()
 
     if giant_timer > 0:
         seconds = (giant_timer + 59) // 60
