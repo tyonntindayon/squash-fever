@@ -1542,11 +1542,10 @@ def draw():
             draw_virtual_keyboard()
 
         elif screen_mode == "leaderboard":
-            # NEON ARCADE results screen, with working period tabs and all 7 rows.
-            # Lift the logo slightly so the yellow divider stays clear of the letters.
-            draw_logo("DOPABALL", 43, 16, 1, 5)
-            draw_logo("DOPABALL", 42, 15, 1, 10)
-            pyxel.line(8, 26, 152, 26, 10)
+            # NEON ARCADE results screen, with the logo neatly inside its own frame.
+            pyxel.rectb(8, 7, 144, 21, 10)
+            draw_logo("DOPABALL", 61, 14, 1, 5)
+            draw_logo("DOPABALL", 60, 13, 1, 10)
 
             # Personal result strip.
             pyxel.rect(8, 28, 144, 15, 1)
