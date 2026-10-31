@@ -1314,6 +1314,10 @@ def update():
         offset = (ball_x - center) / (paddle_w / 2)
         offset = max(-1.0, min(1.0, offset))
 
+        # Prevent a perfectly vertical paddle-to-ceiling loop.
+        if abs(offset) < 0.22:
+            offset = 0.22 if offset >= 0 else -0.22
+
         angle = offset * math.radians(55)
         ball_dx = math.sin(angle)
         ball_dy = -math.cos(angle)
