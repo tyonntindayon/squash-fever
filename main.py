@@ -493,15 +493,12 @@ def draw_title():
 
     draw_period_tabs(39)
     pyxel.text(44, 50, "TOP 5 SCORES", 10)
-    pyxel.rect(106, 47, 40, 9, 5)
-    pyxel.rectb(106, 47, 40, 9, 10)
-    pyxel.text(111, 49, "LEGEND", 10)
 
     if leaderboard_status == "LOADING":
         pyxel.text(49, 64, "LOADING...", 7)
     elif leaderboard_status == "ERROR":
         pyxel.text(22, 64, "RANKING OFFLINE", 8)
-        pyxel.text(13, 75, "CHECK CONNECTION", 6)
+        pyxel.text(5, 75, leaderboard_error[:37], 6)
     elif not leaderboard:
         pyxel.text(28, 66, "NO SCORES YET", 7)
     else:
@@ -519,8 +516,11 @@ def draw_title():
     elif pyxel.frame_count // 20 % 2 == 0:
         pyxel.text(45, 100, "TAP TO START", 10)
 
-    pyxel.text(42, 107, "POWERED BY DOPAMINE", 14)
-    pyxel.text(38, 115, "BEST:" + str(high_score), 7)
+    pyxel.text(20, 109, "POWERED BY DOPAMINE", 14)
+    pyxel.text(20, 116, "BEST:" + str(high_score), 7)
+    pyxel.rect(112, 107, 40, 10, 5)
+    pyxel.rectb(112, 107, 40, 10, 10)
+    pyxel.text(117, 109, "LEGEND", 10)
 
 
 # -----------------------------
@@ -1167,7 +1167,7 @@ def update():
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             if period_tab_clicked(pyxel.mouse_x, pyxel.mouse_y, 39):
                 return
-            if 106 <= pyxel.mouse_x < 146 and 47 <= pyxel.mouse_y < 56:
+            if 112 <= pyxel.mouse_x < 152 and 107 <= pyxel.mouse_y < 117:
                 screen_mode = "legend"
                 launch_legend_refresh()
                 return
