@@ -2,6 +2,7 @@ import pyxel
 import math
 import asyncio
 import json
+import uuid
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
@@ -30,6 +31,7 @@ TABLE_URL = SUPABASE_URL + "/rest/v1/squash_scores"
 GAME_TITLE = "DOPABALL | DOPAMINE SUPPLY"
 TITLE_BYLINE = "DEVELOPED BY TGAMES"
 SAVE_FILE = "dopaball_save.json"
+LEGEND_URL = SUPABASE_URL + "/rest/v1/squash_legends"
 
 pyxel.init(WIDTH, HEIGHT, title=GAME_TITLE)
 
@@ -78,6 +80,8 @@ power_message = ""
 
 player_name = ""
 leaderboard = []
+legend_leaderboard = []
+legend_status = "LOADING"
 leaderboard_status = "LOADING"
 leaderboard_error = ""
 submit_status = ""
@@ -100,7 +104,8 @@ save_data = {
     "high_score": 0,
     "max_combo": 0,
     "max_speed": INITIAL_BALL_SPEED,
-    "last_score": 0
+    "last_score": 0,
+    "player_id": ""
 }
 
 NAME_DISPLAY_X = 8
@@ -264,8 +269,17 @@ def load_save():
         save_data["max_combo"] = max(0, int(loaded.get("max_combo", 0)))
         save_data["max_speed"] = max(INITIAL_BALL_SPEED, float(loaded.get("max_speed", INITIAL_BALL_SPEED)))
         save_data["last_score"] = max(0, int(loaded.get("last_score", 0)))
+        save_data["player_id"] = str(loaded.get("player_id", ""))
     except Exception:
         pass
+
+    if not save_data.get("player_id"):
+        save_data["player_id"] = str(uuid.uuid4())
+        try:
+            with open(SAVE_FILE, "w", encoding="utf-8") as file:
+                json.dump(save_data, file)
+        except Exception:
+            pass
 
     high_score = save_data["high_score"]
     max_combo = save_data["max_combo"]
@@ -497,10 +511,14 @@ def draw_title():
             pyxel.text(29, y, name, 7)
             pyxel.text(112, y, points, 10 if i == 0 else 11)
 
+    pyxel.rect(57, 90, 46, 8, 5)
+    pyxel.rectb(57, 90, 46, 8, 10)
+    pyxel.text(67, 92, "LEGEND", 10)
+
     if title_timer < 120:
         pyxel.text(54, 100, "GET READY...", 7)
     elif pyxel.frame_count // 20 % 2 == 0:
-        pyxel.text(45, 100, "TAP TO START", 10)
+        pyxel.text(45, 100, "TAP TO START", 10
 
     pyxel.text(42, 107, "POWERED BY DOPAMINE", 14)
     pyxel.text(38, 115, "BEST:" + str(high_score), 7)
@@ -543,12 +561,50 @@ async def send_score(name, points):
             "Content-Type": "application/json",
             "Prefer": "return=minimal"
         },
-        body=json.dumps([{"player_name": name, "score": int(points)}])
+        body=json.dumps([{"player_name": name, "player_id": save_data["player_id"], "score": int(points)}])
     )
 
     if response.status >= 400:
         detail = await response.text()
         raise RuntimeError("HTTP " + str(response.status) + " " + detail[:80])
+
+
+async def refresh_legend():
+    global legend_leaderboard, legend_status
+    try:
+        rows = await get_json(LEGEND_URL + "?select=player_id,player_name,score,achieved_at&order=score.desc,achieved_at.asc&limit=10")
+        legend_leaderboard = rows if isinstance(rows, list) else []
+        legend_status = "OK"
+    except Exception:
+        legend_status = "ERROR"
+
+
+def launch_legend_refresh():
+    try:
+        asyncio.ensure_future(refresh_legend())
+    except Exception:
+        pass
+
+
+def draw_legend():
+    pyxel.cls(0)
+    draw_ui_text("LEGEND", 50, 5, 10)
+    pyxel.text(38, 17, "ALL TIME RECORDS", 7)
+    pyxel.line(8, 27, 152, 27, 10)
+    if legend_status == "LOADING":
+        pyxel.text(55, 45, "LOADING...", 7)
+    elif legend_status == "ERROR":
+        pyxel.text(28, 45, "RANKING OFFLINE", 8)
+    elif not legend_leaderboard:
+        pyxel.text(36, 45, "NO RECORDS YET", 7)
+    else:
+        for i, item in enumerate(legend_leaderboard[:10]):
+            y = 31 + i * 8
+            pyxel.text(8, y, str(i + 1) + ".", 10 if i == 0 else 7)
+            pyxel.text(25, y, str(item.get("player_name", "PLAYER"))[:10], 7)
+            pyxel.text(111, y, str(item.get("score", 0)), 10 if i == 0 else 11)
+    pyxel.line(8, 113, 152, 113, 5)
+    pyxel.text(43, 115, "TAP TO RETURN", 10)
 
 
 async def refresh_leaderboard():
@@ -1101,11 +1157,20 @@ def update():
         if dev_menu_open:
             return
 
+    if screen_mode == "legend":
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT) or pyxel.btnp(pyxel.KEY_ESCAPE) or pyxel.btnp(pyxel.KEY_SPACE):
+            screen_mode = "title"
+        return
+
     if screen_mode == "title":
         title_timer += 1
 
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             if period_tab_clicked(pyxel.mouse_x, pyxel.mouse_y, 39):
+                return
+            if 57 <= pyxel.mouse_x < 103 and 90 <= pyxel.mouse_y < 98:
+                screen_mode = "legend"
+                launch_legend_refresh()
                 return
             if title_timer >= 120:
                 reset()
@@ -1333,6 +1398,10 @@ def draw_game_hud():
 def draw():
     if screen_mode == "title":
         draw_title()
+        return
+
+    if screen_mode == "legend":
+        draw_legend()
         return
 
     speed_phase = int(ball_speed * 2)
