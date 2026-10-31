@@ -522,9 +522,9 @@ def draw_title():
 
     pyxel.text(8, 113, "BEST:" + str(high_score), 10)
     pyxel.text(75, 115, "TGAMES", 5)
-    pyxel.rect(112, 108, 40, 10, 1)
-    pyxel.rectb(112, 108, 40, 10, 10)
-    pyxel.text(117, 110, "LEGEND", 10)
+    pyxel.rect(112, 110, 40, 10, 1)
+    pyxel.rectb(112, 110, 40, 10, 10)
+    pyxel.text(117, 112, "LEGEND", 10)
 
 
 # -----------------------------
@@ -1173,7 +1173,7 @@ def update():
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             if period_tab_clicked(pyxel.mouse_x, pyxel.mouse_y, 39):
                 return
-            if 112 <= pyxel.mouse_x < 152 and 107 <= pyxel.mouse_y < 117:
+            if 112 <= pyxel.mouse_x < 152 and 109 <= pyxel.mouse_y < 119:
                 screen_mode = "legend"
                 launch_legend_refresh()
                 return
