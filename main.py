@@ -1542,41 +1542,53 @@ def draw():
             draw_virtual_keyboard()
 
         elif screen_mode == "leaderboard":
-            draw_logo("DOPABALL", 43, 29, 1, 8)
-            draw_logo("DOPABALL", 42, 28, 1, 10)
+            # NEON ARCADE results screen.
+            draw_logo("DOPABALL", 43, 23, 1, 5)
+            draw_logo("DOPABALL", 42, 22, 1, 10)
+            pyxel.line(8, 31, 152, 31, 10)
 
-            draw_period_tabs(38)
-            pyxel.text(42, 49, "TOP 7 SCORES", 10)
+            # Personal result strip.
+            pyxel.rect(8, 34, 144, 17, 1)
+            pyxel.rectb(8, 34, 144, 17, 10)
+            pyxel.text(14, 38, "YOUR SCORE", 7)
+            pyxel.text(14, 44, str(score)[:10], 10)
+            pyxel.text(91, 38, "BEST", 7)
+            pyxel.text(91, 44, str(high_score)[:10], 10)
+
+            draw_period_tabs(54)
+            pyxel.text(48, 66, "TOP 7 PLAYERS", 10)
+            pyxel.line(8, 74, 152, 74, 5)
 
             if leaderboard_status == "LOADING":
-                pyxel.text(43, 59, "LOADING...", 7)
+                pyxel.text(48, 82, "LOADING...", 7)
             elif leaderboard_status == "ERROR":
-                pyxel.text(12, 59, "RANKING OFFLINE", 8)
-                pyxel.text(7, 68, "SCORE SAVED LOCALLY", 7)
+                pyxel.text(17, 81, "RANKING OFFLINE", 8)
+                pyxel.text(8, 90, "SCORE SAVED LOCALLY", 7)
                 error_text = str(leaderboard_error or "")
-                pyxel.text(7, 77, error_text[:22], 7)
-                pyxel.text(7, 84, error_text[22:44], 7)
-                pyxel.text(7, 91, error_text[44:66], 7)
+                pyxel.text(8, 98, error_text[:36], 6)
             elif not leaderboard:
-                pyxel.text(29, 59, "NO SCORES YET", 7)
+                pyxel.text(31, 84, "NO SCORES YET", 7)
             else:
-                for i, item in enumerate(leaderboard[:7]):
-                    y = 57 + i * 6
+                for i, item in enumerate(leaderboard[:4]):
+                    y = 78 + i * 6
                     name = str(item.get("player_name", "PLAYER"))[:10]
                     points = str(item.get("score", 0))
-                    pyxel.text(7, y, str(i + 1) + ".", 10)
-                    pyxel.text(23, y, name, 7)
-                    pyxel.text(112, y, points, 11)
+                    if i == 0:
+                        pyxel.rect(8, y - 1, 144, 6, 1)
+                    pyxel.text(12, y, str(i + 1) + ".", 10 if i == 0 else 7)
+                    pyxel.text(28, y, name, 7)
+                    pyxel.text(112, y, points, 10 if i == 0 else 11)
 
+            # Submission status and replay prompt.
             if submit_status == "LOCAL SAVE":
-                pyxel.text(7, 98, "LOCAL SAVE", 10)
+                pyxel.text(8, 105, "LOCAL SAVE", 8)
             elif submit_status == "SAVED":
-                pyxel.text(7, 98, "RANKED", 10)
+                pyxel.text(8, 105, "RANKED", 10)
             elif submit_status == "SENDING":
-                pyxel.text(7, 98, "SENDING...", 11)
+                pyxel.text(8, 105, "SENDING...", 11)
 
-            pyxel.text(7, 104, str(submit_status or "")[:22], 6 if submit_status == "SAVED" else 8)
-            pyxel.text(7, 112, "TAP / SPACE: RETRY", 10)
+            pyxel.text(87, 105, "SPACE: RETRY", 10)
+            pyxel.text(8, 114, "POWERED BY TGAMES", 5)
 
 
 pyxel.run(update, draw)
