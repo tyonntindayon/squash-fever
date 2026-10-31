@@ -518,7 +518,7 @@ def draw_title():
     if title_timer < 120:
         pyxel.text(54, 100, "GET READY...", 7)
     elif pyxel.frame_count // 20 % 2 == 0:
-        pyxel.text(45, 100, "TAP TO START", 10
+        pyxel.text(45, 100, "TAP TO START", 10)
 
     pyxel.text(42, 107, "POWERED BY DOPAMINE", 14)
     pyxel.text(38, 115, "BEST:" + str(high_score), 7)
