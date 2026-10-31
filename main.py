@@ -1543,8 +1543,9 @@ def draw():
 
         elif screen_mode == "leaderboard":
             # NEON ARCADE results screen, with working period tabs and all 7 rows.
-            draw_logo("DOPABALL", 43, 18, 1, 5)
-            draw_logo("DOPABALL", 42, 17, 1, 10)
+            # Lift the logo slightly so the yellow divider stays clear of the letters.
+            draw_logo("DOPABALL", 43, 16, 1, 5)
+            draw_logo("DOPABALL", 42, 15, 1, 10)
             pyxel.line(8, 26, 152, 26, 10)
 
             # Personal result strip.
