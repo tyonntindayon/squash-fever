@@ -1571,7 +1571,8 @@ def draw():
             else:
                 for i, item in enumerate(leaderboard[:7]):
                     y = 66 + i * 7
-                    name = str(item.get("player_name", "PLAYER"))[:10]
+                    # Add visual spacing between player-name characters.
+                    name = " ".join(str(item.get("player_name", "PLAYER"))[:9])
                     points = str(item.get("score", 0))
                     if i == 0:
                         pyxel.rect(8, y - 1, 144, 8, 1)
