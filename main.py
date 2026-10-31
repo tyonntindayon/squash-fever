@@ -1581,7 +1581,7 @@ def draw():
                     pyxel.text(112, y, points, 10 if i == 0 else 11)
 
             # Retry prompt only; no ranking-status or TGAMES footer text.
-            pyxel.text(87, 114, "SPACE: RETRY", 10)
+            pyxel.text(87, 111, "SPACE: RETRY", 10)
 
 
 pyxel.run(update, draw)
