@@ -1570,9 +1570,9 @@ def draw():
                 draw_ui_text("NO SCORES YET", 39, 78, 7)
             else:
                 for i, item in enumerate(leaderboard[:7]):
-                    y = 66 + i * 7
-                    # Add visual spacing between player-name characters.
-                    name = " ".join(str(item.get("player_name", "PLAYER"))[:9])
+                    # Add vertical spacing between ranked players.
+                    y = 66 + i * 8
+                    name = str(item.get("player_name", "PLAYER"))[:10]
                     points = str(item.get("score", 0))
                     if i == 0:
                         pyxel.rect(8, y - 1, 144, 8, 1)
@@ -1581,7 +1581,7 @@ def draw():
                     draw_ui_text(points, 112, y, 10 if i == 0 else 11)
 
             # Retry prompt only; no ranking-status or TGAMES footer text.
-            pyxel.text(87, 113, "SPACE: RETRY", 10)
+            pyxel.text(87, 122, "SPACE: RETRY", 10)
 
 
 pyxel.run(update, draw)
