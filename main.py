@@ -1045,7 +1045,7 @@ def update_dev_menu():
         elif dev_menu_selected == 3:
             combo = max(0, combo + change)
         elif dev_menu_selected == 4:
-            score = 2401687
+            score = 1070000
             dev_rankable_score = True
 
 
@@ -1064,7 +1064,7 @@ def draw_dev_menu():
         ("BALL SPEED", str(round(ball_speed, 1))),
         ("HEARTS", str(hearts)),
         ("COMBO", str(combo)),
-        ("SCORE 2401687", "SET"),
+        ("SCORE 1070000", "SET"),
     ]
     for i, (label, value) in enumerate(items):
         y = 51 + i * 8
